@@ -53,6 +53,13 @@ export interface Room {
   matchResult?: MatchResult;
   marketTrend?: 'boom' | 'crash' | 'stable';
   upcomingStars?: string[]; // Player IDs that are leaked as "coming soon"
+  auctionState?: {
+    currentBids: Record<string, number>; // teamId -> bid amount
+    highestBidder: string | null;
+    highestBid: number;
+    timeLeft: number; // seconds
+    timerStarted: number; // timestamp
+  };
 }
 
 export interface MatchResult {

@@ -27,6 +27,150 @@ const io = new Server(httpServer, {
 
 // In-memory room storage
 const rooms = new Map<string, Room>();
+const auctionTimers = new Map<string, NodeJS.Timeout>();
+
+// Auction timer function
+function startAuctionTimer(roomId: string, io: Server) {
+  // Clear existing timer if any
+  const existingTimer = auctionTimers.get(roomId);
+  if (existingTimer) {
+    clearInterval(existingTimer);
+  }
+
+  const room = rooms.get(roomId);
+  if (!room || !room.auctionState) return;
+
+  // Emit timer updates every second
+  const timer = setInterval(() => {
+    const room = rooms.get(roomId);
+    if (!room || !room.auctionState) {
+      clearInterval(timer);
+      auctionTimers.delete(roomId);
+      return;
+    }
+
+    const elapsed = Math.floor((Date.now() - room.auctionState.timerStarted) / 1000);
+    room.auctionState.timeLeft = Math.max(0, 30 - elapsed);
+
+    // Emit timer update
+    io.to(roomId).emit('auction_timer', { timeLeft: room.auctionState.timeLeft });
+
+    // Timer finished
+    if (room.auctionState.timeLeft <= 0) {
+      clearInterval(timer);
+      auctionTimers.delete(roomId);
+      finalizeAuction(roomId, io);
+    }
+  }, 1000);
+
+  auctionTimers.set(roomId, timer);
+}
+
+// Finalize auction - award player to highest bidder
+function finalizeAuction(roomId: string, io: Server) {
+  const room = rooms.get(roomId);
+  if (!room || !room.auctionState) return;
+
+  const currentPlayer = room.auctionPool[room.currentPlayerIndex];
+  if (!currentPlayer) return;
+
+  // Award player to highest bidder
+  if (room.auctionState.highestBidder) {
+    const winnerTeam = room.teams.find(t => t.id === room.auctionState!.highestBidder);
+    if (winnerTeam) {
+      winnerTeam.budget -= room.auctionState.highestBid;
+      winnerTeam.roster.push(currentPlayer);
+
+      io.to(roomId).emit('player_acquired', {
+        player: currentPlayer,
+        amount: room.auctionState.highestBid,
+        winner: winnerTeam.name
+      });
+    }
+  } else {
+    // No bids - player skipped
+    io.to(roomId).emit('player_skipped', { player: currentPlayer });
+  }
+
+  // Move to next player
+  room.currentPlayerIndex++;
+
+  // Check if all players have roster of 14
+  const allComplete = room.teams.every(t => t.roster.length >= 14);
+
+  if (allComplete) {
+    // Move to steal phase
+    room.phase = 'steal';
+    io.to(roomId).emit('phase_changed', { phase: 'steal' });
+  } else {
+    // Start next auction
+    const nextPlayer = room.auctionPool[room.currentPlayerIndex];
+    if (nextPlayer) {
+      room.auctionState = {
+        currentBids: {},
+        highestBidder: null,
+        highestBid: 0,
+        timeLeft: 30,
+        timerStarted: Date.now()
+      };
+
+      // Bot auto-bid logic
+      const botTeam = room.teams.find(t => t.id === 'bot');
+      if (botTeam && botTeam.roster.length < 14) {
+        const botAI = new BotAI(botTeam);
+        const positionCheck = canAddPlayer(botTeam, nextPlayer);
+
+        if (botAI.shouldBid(nextPlayer) && positionCheck.allowed) {
+          setTimeout(() => {
+            const botBid = botAI.calculateBid(nextPlayer);
+            const slotsRemaining = 14 - botTeam.roster.length;
+
+            if (botBid <= botTeam.budget - (slotsRemaining - 1)) {
+              const room = rooms.get(roomId);
+              if (room && room.auctionState) {
+                room.auctionState.currentBids[botTeam.id] = botBid;
+                room.auctionState.highestBid = botBid;
+                room.auctionState.highestBidder = botTeam.id;
+
+                io.to(roomId).emit('bid_placed', {
+                  teamName: botTeam.name,
+                  amount: botBid,
+                  highestBid: botBid,
+                  highestBidder: botTeam.name
+                });
+                io.to(roomId).emit('room_updated', room);
+              }
+            }
+          }, Math.random() * 5000 + 2000); // Bot bids after 2-7 seconds
+        }
+      }
+
+      io.to(roomId).emit('next_player', { player: nextPlayer });
+      startAuctionTimer(roomId, io);
+    }
+  }
+
+  // Market dynamics check
+  if (room.currentPlayerIndex % 8 === 0 && Math.random() < 0.4) {
+    const trends = ['boom', 'crash', 'stable'] as const;
+    const oldTrend = room.marketTrend || 'stable';
+    room.marketTrend = trends[Math.floor(Math.random() * trends.length)];
+
+    if (room.marketTrend !== oldTrend) {
+      const trendMessages = {
+        boom: '📈 Piyasa canlanıyor! Oyuncu değerleri yükselişte!',
+        crash: '📉 Piyasa durgunlaştı. Fırsatlar çıkabilir!',
+        stable: '💼 Piyasa dengelendi.'
+      };
+      io.to(roomId).emit('market_shift', {
+        trend: room.marketTrend,
+        message: trendMessages[room.marketTrend]
+      });
+    }
+  }
+
+  io.to(roomId).emit('room_updated', room);
+}
 
 // Generate room ID
 function generateRoomId(): string {
@@ -119,6 +263,15 @@ io.on('connection', (socket) => {
     room.phase = 'auction';
     room.currentPlayerIndex = 0;
 
+    // Initialize auction state
+    room.auctionState = {
+      currentBids: {},
+      highestBidder: null,
+      highestBid: 0,
+      timeLeft: 30,
+      timerStarted: Date.now()
+    };
+
     // Initialize market mechanics
     room.marketTrend = 'stable';
 
@@ -135,6 +288,9 @@ io.on('connection', (socket) => {
         room.upcomingStars.push(player.id);
       }
     }
+
+    // Start auction timer
+    startAuctionTimer(roomId, io);
 
     callback({ success: true });
     io.to(roomId).emit('phase_changed', { phase: 'auction', currentPlayer: room.auctionPool[0] });
@@ -165,10 +321,21 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Check budget reserve (must keep enough for remaining slots)
+    if (!room.auctionState) {
+      callback({ success: false, error: 'Açık artırma durumu bulunamadı' });
+      return;
+    }
+
+    // Check budget reserve
     const slotsRemaining = 14 - playerTeam.roster.length;
     if (amount > playerTeam.budget - (slotsRemaining - 1)) {
       callback({ success: false, error: 'Bu teklif kadro rezervini ihlal ediyor' });
+      return;
+    }
+
+    // Check if bid is higher than current highest
+    if (amount <= room.auctionState.highestBid) {
+      callback({ success: false, error: `En az ${room.auctionState.highestBid + 1} CR teklif vermelisin` });
       return;
     }
 
@@ -179,64 +346,23 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Add player to roster
-    playerTeam.budget -= amount;
-    playerTeam.roster.push(currentPlayer);
-
-    // Bot makes intelligent decision
-    const botTeam = room.teams.find(t => t.id === 'bot');
-    if (botTeam && botTeam.roster.length < 14) {
-      const botAI = new BotAI(botTeam);
-      const botPlayerIndex = room.currentPlayerIndex + 1;
-      const botPlayer = room.auctionPool[botPlayerIndex];
-
-      if (botPlayer) {
-        const botPositionCheck = canAddPlayer(botTeam, botPlayer);
-        if (botAI.shouldBid(botPlayer) && botPositionCheck.allowed) {
-          const botBidAmount = botAI.calculateBid(botPlayer);
-          botTeam.budget -= botBidAmount;
-          botTeam.roster.push(botPlayer);
-        }
-      }
-    }
-
-    // Move to next player
-    room.currentPlayerIndex += 2;
-
-    // Market dynamics: every 4 picks, chance of market shift
-    if (room.currentPlayerIndex % 8 === 0 && Math.random() < 0.4) {
-      const trends = ['boom', 'crash', 'stable'] as const;
-      const oldTrend = room.marketTrend || 'stable';
-      room.marketTrend = trends[Math.floor(Math.random() * trends.length)];
-
-      if (room.marketTrend !== oldTrend) {
-        const trendMessages = {
-          boom: '📈 Piyasa canlanıyor! Oyuncu değerleri yükselişte!',
-          crash: '📉 Piyasa durgunlaştı. Fırsatlar çıkabilir!',
-          stable: '💼 Piyasa dengelendi.'
-        };
-        io.to(roomId).emit('market_shift', {
-          trend: room.marketTrend,
-          message: trendMessages[room.marketTrend]
-        });
-      }
-    }
-
-    // Check if auction phase is complete
-    if (playerTeam.roster.length >= 14) {
-      room.phase = 'steal';
-      io.to(roomId).emit('phase_changed', { phase: 'steal' });
-    } else {
-      const nextPlayer = room.auctionPool[room.currentPlayerIndex];
-      io.to(roomId).emit('player_acquired', { player: currentPlayer, amount });
-      io.to(roomId).emit('next_player', { player: nextPlayer });
-    }
+    // Update auction state
+    room.auctionState.currentBids[playerTeam.id] = amount;
+    room.auctionState.highestBid = amount;
+    room.auctionState.highestBidder = playerTeam.id;
 
     callback({ success: true });
+    io.to(roomId).emit('bid_placed', {
+      teamName: playerTeam.name,
+      amount,
+      highestBid: amount,
+      highestBidder: playerTeam.name
+    });
     io.to(roomId).emit('room_updated', room);
   });
 
   // Skip player
+  // Skip player - now just passes the turn (timer will finalize)
   socket.on('skip_player', ({ roomId }, callback) => {
     const room = rooms.get(roomId);
     if (!room) {
@@ -244,12 +370,8 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.currentPlayerIndex += 1;
-    const nextPlayer = room.auctionPool[room.currentPlayerIndex];
-
+    // Just mark that this player passed - they won't bid anymore
     callback({ success: true });
-    io.to(roomId).emit('next_player', { player: nextPlayer });
-    io.to(roomId).emit('room_updated', room);
   });
 
   // Use scout

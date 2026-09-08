@@ -28,6 +28,9 @@ function App() {
   const [marketTrend, setMarketTrend] = useState<'boom' | 'crash' | 'stable'>('stable');
   const [gossipStars, setGossipStars] = useState<string[]>([]);
   const [playerCount, setPlayerCount] = useState(1);
+  const [auctionTimer, setAuctionTimer] = useState(30);
+  const [highestBid, setHighestBid] = useState(0);
+  const [highestBidder, setHighestBidder] = useState('');
 
   // Steal phase state
   const [stealTarget, setStealTarget] = useState('');
@@ -57,11 +60,18 @@ function App() {
       setPhase(data.phase as Phase);
       if (data.currentPlayer) {
         setCurrent(data.currentPlayer);
+        setAuctionTimer(30);
+        setHighestBid(0);
+        setHighestBidder('');
+        setBid(1);
       }
     });
 
     socketService.onNextPlayer((data) => {
       setCurrent(data.player);
+      setAuctionTimer(30);
+      setHighestBid(0);
+      setHighestBidder('');
       setBid(1);
     });
 
@@ -87,6 +97,20 @@ function App() {
       setMessage(`🎮 ${data.teamName} odaya katıldı!`);
     });
 
+    socketService.on('auction_timer', (data) => {
+      setAuctionTimer(data.timeLeft);
+    });
+
+    socketService.on('bid_placed', (data) => {
+      setHighestBid(data.highestBid);
+      setHighestBidder(data.highestBidder);
+      setMessage(`${data.teamName} ${data.amount} CR teklif verdi!`);
+    });
+
+    socketService.on('player_skipped', (data) => {
+      setMessage(`${data.player.name} için teklif verilmedi, geçildi.`);
+    });
+
     return () => {
       socketService.off('room_updated');
       socketService.off('phase_changed');
@@ -96,6 +120,9 @@ function App() {
       socketService.off('market_gossip');
       socketService.off('market_shift');
       socketService.off('player_joined');
+      socketService.off('auction_timer');
+      socketService.off('bid_placed');
+      socketService.off('player_skipped');
     };
   }, []);
 
@@ -272,6 +299,9 @@ function App() {
             tradeOffers={tradeOffers}
             marketTrend={marketTrend}
             gossipStars={gossipStars}
+            auctionTimer={auctionTimer}
+            highestBid={highestBid}
+            highestBidder={highestBidder}
           />
         )}
       </main>
@@ -521,12 +551,30 @@ function Game(p: any) {
 function Auction(p: any) {
   const x = p.current as Player;
   if (!x) return null;
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="auction">
       <div className="auction-top">
         <span className="kicker">AÇIK ARTIRMA · {p.me.roster.length + 1}. TUR</span>
-        <span className="timer">00:12</span>
+        <span className="timer" style={{ color: p.auctionTimer <= 10 ? '#ff7b6e' : '#b8ed61' }}>
+          {formatTime(p.auctionTimer)}
+        </span>
       </div>
+      {p.highestBid > 0 && (
+        <div style={{ padding: '12px', background: '#102d25', borderRadius: '5px', marginBottom: '15px', textAlign: 'center' }}>
+          <small style={{ color: '#9ab3a8', fontSize: '11px', display: 'block' }}>EN YÜKSEK TEKLİF</small>
+          <strong style={{ color: '#b8ed61', fontSize: '20px' }}>{p.highestBid} CR</strong>
+          <span style={{ color: '#82a49a', fontSize: '11px', display: 'block', marginTop: '4px' }}>
+            {p.highestBidder}
+          </span>
+        </div>
+      )}
       <div className="player-card">
         <div className={`player-art ${x.primaryPosition}`}>
           <span>{x.primaryPosition}</span>
@@ -559,28 +607,28 @@ function Auction(p: any) {
       </div>
       <div className="bid-row">
         <div>
-          <small>MEVCUT TEKLİF</small>
+          <small>TEKLİFİN</small>
           <strong>{p.bid} CR</strong>
         </div>
         <input
           type="range"
-          min="1"
+          min={Math.max(1, p.highestBid + 1)}
           max={Math.max(1, p.me.budget - (14 - p.me.roster.length))}
           value={p.bid}
           onChange={e => p.setBid(+e.target.value)}
         />
-        <button className="primary" onClick={() => p.buy(p.bid)}>
+        <button className="primary" onClick={() => p.buy(p.bid)} disabled={p.bid <= p.highestBid}>
           Teklif ver · {p.bid} CR
         </button>
-        <button onClick={() => p.buy(Math.max(1, p.me.budget - (14 - p.me.roster.length)))}>ALL-IN</button>
+        <button onClick={() => p.buy(Math.max(p.highestBid + 1, p.me.budget - (14 - p.me.roster.length)))}>ALL-IN</button>
         <button className="ghost" onClick={p.skip}>
           Pas geç
         </button>
       </div>
       <div className="scout">
         <b>SCOUT HAKLARI</b>
-        <span>Rakipler yalnızca scout kullandığını görür.</span>
-        <button onClick={p.scout}>🔎 Kaliteyi gör ({p.me.scouts})</button>
+        <span>Sonraki oyuncunun bilgilerini göster.</span>
+        <button onClick={p.scout}>🔎 Scout kullan ({p.me.scouts})</button>
       </div>
     </div>
   );
