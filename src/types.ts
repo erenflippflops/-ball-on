@@ -1,6 +1,14 @@
 export type Position = 'GK' | 'CB' | 'LB' | 'RB' | 'LWB' | 'RWB' | 'DM' | 'CM' | 'AM' | 'LM' | 'RM' | 'LW' | 'RW' | 'ST';
 export type MarketTier = 'star' | 'high' | 'medium' | 'low';
 
+export type JokerType = 'budget' | 'scout' | 'buff' | 'free_transfer';
+
+export interface Joker {
+  type: JokerType;
+  value: number; // For budget: CR amount, for scout/buff: count, for free_transfer: minimum bid
+  revealed: boolean;
+}
+
 export interface PlayerAttributes {
   pace: number;
   shooting: number;
@@ -25,6 +33,7 @@ export interface Player {
   archetype: string;
   preferredRoles: string[];
   attributes: PlayerAttributes;
+  joker?: Joker; // Hidden bonus that reveals on purchase
 }
 
 export interface Team {

@@ -90,6 +90,16 @@ export const translations = {
     budgetViolation: 'Bu teklif kadro rezervini ihlal ediyor.',
     noScouts: 'Scout hakkın kalmadı.',
 
+    // Jokers
+    jokerBudget: 'BÜTÇE BONUSU',
+    jokerScout: 'SCOUT BONUSU',
+    jokerBuff: 'BUFF BONUSU',
+    jokerFreeTransfer: 'SERBEST TRANSFER',
+    jokerRevealBudget: 'ekstra bütçe kazandırdı!',
+    jokerRevealScout: 'scout hakkı kazandırdı!',
+    jokerRevealBuff: 'buff kazandırdı!',
+    jokerRevealFreeTransfer: 'Serbest transfer! Minimum teklif',
+
     // Other phases
     stealPhase: 'Oyuncu çalma',
     tradePhase: 'Serbest takas',
@@ -185,6 +195,16 @@ export const translations = {
     couldNotJoin: 'Could not join room',
     budgetViolation: 'This bid violates squad reserve.',
     noScouts: 'No scout rights left.',
+
+    // Jokers
+    jokerBudget: 'BUDGET BONUS',
+    jokerScout: 'SCOUT BONUS',
+    jokerBuff: 'BUFF BONUS',
+    jokerFreeTransfer: 'FREE TRANSFER',
+    jokerRevealBudget: 'bonus budget earned!',
+    jokerRevealScout: 'scout right(s) earned!',
+    jokerRevealBuff: 'buff earned!',
+    jokerRevealFreeTransfer: 'Free transfer! Minimum bid',
 
     // Other phases
     stealPhase: 'Steal Player',

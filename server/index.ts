@@ -87,11 +87,31 @@ function finalizeAuction(roomId: string, io: Server) {
       winnerTeam.budget -= room.auctionState.highestBid;
       winnerTeam.roster.push(currentPlayer);
 
+      // Apply joker bonus if player has one
+      let jokerBonus = null;
+      if (currentPlayer.joker && !currentPlayer.joker.revealed) {
+        currentPlayer.joker.revealed = true;
+        jokerBonus = currentPlayer.joker;
+
+        switch (jokerBonus.type) {
+          case 'budget':
+            winnerTeam.budget += jokerBonus.value;
+            break;
+          case 'scout':
+            winnerTeam.scouts += jokerBonus.value;
+            break;
+          case 'buff':
+            winnerTeam.buff += jokerBonus.value;
+            break;
+        }
+      }
+
       io.to(roomId).emit('player_acquired', {
         player: currentPlayer,
         amount: room.auctionState.highestBid,
         winner: winnerTeam.name,
-        allBidders
+        allBidders,
+        joker: jokerBonus
       });
     }
   } else {
@@ -106,11 +126,31 @@ function finalizeAuction(roomId: string, io: Server) {
       const randomTeam = eligibleTeams[Math.floor(Math.random() * eligibleTeams.length)];
       randomTeam.roster.push(currentPlayer);
 
+      // Apply joker bonus even for free transfers
+      let jokerBonus = null;
+      if (currentPlayer.joker && !currentPlayer.joker.revealed) {
+        currentPlayer.joker.revealed = true;
+        jokerBonus = currentPlayer.joker;
+
+        switch (jokerBonus.type) {
+          case 'budget':
+            randomTeam.budget += jokerBonus.value;
+            break;
+          case 'scout':
+            randomTeam.scouts += jokerBonus.value;
+            break;
+          case 'buff':
+            randomTeam.buff += jokerBonus.value;
+            break;
+        }
+      }
+
       io.to(roomId).emit('player_acquired', {
         player: currentPlayer,
         amount: 0,
         winner: randomTeam.name,
-        free: true
+        free: true,
+        joker: jokerBonus
       });
       io.to(roomId).emit('message', {
         text: `Hiç teklif verilmedi! ${currentPlayer.name} rastgele ${randomTeam.name} takımına ücretsiz gitti.`

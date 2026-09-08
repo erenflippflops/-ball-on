@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import './style.css';
-import './style-joker.css';
+import './style-improved.css';
 import { socketService } from './socketService';
 import type { Player, Team, Room, Phase } from './types';
-import { translations, type Language } from './translations';
+
+const posNames: Record<string, string> = {
+  GK: 'Kaleci', CB: 'Stoper', LB: 'Sol bek', RB: 'Sağ bek',
+  LWB: 'Sol kanat bek', RWB: 'Sağ kanat bek',
+  DM: 'Ön libero', CM: 'Merkez', AM: 'Ofansif orta saha',
+  LM: 'Sol orta saha', RM: 'Sağ orta saha',
+  LW: 'Sol kanat', RW: 'Sağ kanat', ST: 'Santrfor'
+};
 
 function App() {
   const [phase, setPhase] = useState<Phase>('lobby');
@@ -14,7 +20,7 @@ function App() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [current, setCurrent] = useState<Player | null>(null);
   const [bid, setBid] = useState(1);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('Odayı oluştur veya mevcut bir odaya katıl.');
   const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [formation, setFormation] = useState('4-3-3');
   const [tactic, setTactic] = useState('Balanced');
@@ -28,15 +34,12 @@ function App() {
   const [highestBidder, setHighestBidder] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(2);
   const [competition, setCompetition] = useState('Premier League');
-  const [language, setLanguage] = useState<Language>('tr');
-  const [auctionResult, setAuctionResult] = useState<{ player: Player; winner: string; amount: number; allBidders: any[]; free?: boolean } | null>(null);
 
   // Steal phase state
   const [stealTarget, setStealTarget] = useState('');
   const [stealOffer, setStealOffer] = useState('');
   const [stealProtect, setStealProtect] = useState('');
 
-  const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const avg = me.roster.length ? Math.round(me.roster.reduce((s, p) => s + p.baseOverall, 0) / me.roster.length) : 0;
@@ -83,30 +86,19 @@ function App() {
     });
 
     socketService.onPlayerAcquired((data: any) => {
-      // Store auction result to show modal
-      setAuctionResult({
-        player: data.player,
-        winner: data.winner,
-        amount: data.amount,
-        allBidders: data.allBidders || [],
-        free: data.free
-      });
-
       if (data.free) {
-        const msg = language === 'tr'
-          ? `🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`
-          : `🎲 ${data.player.name} received no bids! Randomly assigned to ${data.winner} for free.`;
+        const msg = `🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`;
         setMessage(msg);
+        showNotification(msg, 'info');
       } else {
         let bidInfo = '';
         if (data.allBidders && data.allBidders.length > 0) {
           const bidders = data.allBidders.map((b: any) => `${b.teamName}: ${b.amount} CR`).join(', ');
-          bidInfo = language === 'tr' ? `📊 Teklifler: ${bidders}\n` : `📊 Bids: ${bidders}\n`;
+          bidInfo = `📊 Teklifler: ${bidders}\n`;
         }
-        const msg = language === 'tr'
-          ? `🏆 ${data.winner} kazandı! ${data.player.name} ${data.amount} CR'ye alındı!`
-          : `🏆 ${data.winner} won! ${data.player.name} bought for ${data.amount} CR!`;
+        const msg = `🏆 ${data.winner} kazandı! ${data.player.name} ${data.amount} CR'ye alındı!`;
         setMessage(`${bidInfo}${msg}`);
+        showNotification(msg, 'success');
       }
     });
 
@@ -304,15 +296,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* Auction Result Modal */}
-      {auctionResult && (
-        <AuctionResultModal
-          result={auctionResult}
-          language={language}
-          onClose={() => setAuctionResult(null)}
-        />
-      )}
-
       {/* Center Notification System */}
       {notification && (
         <div className="notification-center">
@@ -331,24 +314,10 @@ function App() {
           </div>
         </div>
         <div className="phase">
-          <span>{t.phase}</span>
+          <span>FAZ</span>
           <b>{phase.toUpperCase()}</b>
         </div>
-        <div className="language-toggle">
-          <button
-            className={language === 'tr' ? 'active' : ''}
-            onClick={() => setLanguage('tr')}
-          >
-            TR
-          </button>
-          <button
-            className={language === 'en' ? 'active' : ''}
-            onClick={() => setLanguage('en')}
-          >
-            EN
-          </button>
-        </div>
-        <div className="room">{room && <>{t.room} <b>{room}</b></>}</div>
+        <div className="room">{room && <>ODA <b>{room}</b></>}</div>
       </header>
       <main>
         {phase === 'lobby' ? (
@@ -717,7 +686,6 @@ function Auction(p: any) {
   const x = p.current as Player;
   if (!x) return null;
 
-  const t = translations[p.language as Language];
   const maxBid = Math.max(1, p.me.budget - (14 - p.me.roster.length));
 
   return (
@@ -743,11 +711,11 @@ function Auction(p: any) {
         <div className="player-info">
           <h1>{x.name}</h1>
           <p>
-            {t.positions[x.primaryPosition]} · {x.age} {t.years} · {x.archetype}
+            {posNames[x.primaryPosition]} · {x.age} yaş · {x.archetype}
           </p>
           <div className="tier">
             {x.marketTier.toUpperCase()}
-            <small>{t.quality}</small>
+            <small>kalite</small>
           </div>
           <div className="attributes">
             <div>
@@ -1050,99 +1018,6 @@ function Result(p: any) {
         </b>
       </div>
       <button className="primary">Turnuva bracket'ine dön →</button>
-    </div>
-  );
-}
-
-// Auction Result Modal Component
-function AuctionResultModal({ result, language, onClose }: { result: any; language: Language; onClose: () => void }) {
-  const t = translations[language];
-
-  if (!result) return null;
-
-  return (
-    <div className="auction-result-modal" onClick={onClose}>
-      <div className="auction-result-content" onClick={(e) => e.stopPropagation()}>
-        <div className="auction-result-header">
-          <p className="kicker">{t.auctionResult}</p>
-          <h2>{result.player.name}</h2>
-        </div>
-
-        <div className="auction-result-player">
-          <div className="auction-result-player-art">
-            <span>{result.player.primaryPosition}</span>
-            <strong>{result.player.baseOverall}</strong>
-          </div>
-          <div className="auction-result-player-info">
-            <h3>{result.player.name}</h3>
-            <p>
-              {t.positions[result.player.primaryPosition as keyof typeof t.positions]} · {result.player.age} {t.years} · {result.player.archetype}
-            </p>
-          </div>
-        </div>
-
-        {result.free ? (
-          <div className="auction-result-free">
-            <div className="auction-result-free-icon">🎲</div>
-            <p>
-              <strong>{t.noBidsReceived}</strong><br />
-              {t.assignedRandomly}: <strong>{result.winner}</strong>
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="auction-result-winner">
-              <div className="auction-result-winner-label">{t.winner}</div>
-              <div className="auction-result-winner-name">{result.winner}</div>
-              <div className="auction-result-winner-amount">
-                {result.amount} <small>CR</small>
-              </div>
-            </div>
-
-            {result.allBidders && result.allBidders.length > 0 && (
-              <div className="auction-result-bids">
-                <h4>{t.allBids}</h4>
-                <div className="auction-result-bid-list">
-                  {result.allBidders.sort((a: any, b: any) => b.amount - a.amount).map((bidder: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className={`auction-result-bid-item ${bidder.teamName === result.winner ? 'winner' : ''}`}
-                    >
-                      <span>{bidder.teamName}</span>
-                      <strong>{bidder.amount} CR</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* Joker Reveal */}
-        {result.joker && (
-          <div className="auction-result-joker">
-            <div className="joker-icon">🎁</div>
-            <div className="joker-content">
-              <div className="joker-label">
-                {result.joker.type === 'budget' && t.jokerBudget}
-                {result.joker.type === 'scout' && t.jokerScout}
-                {result.joker.type === 'buff' && t.jokerBuff}
-                {result.joker.type === 'free_transfer' && t.jokerFreeTransfer}
-              </div>
-              <div className="joker-description">
-                <strong>{result.player.name}</strong> {result.winner} {' '}
-                {result.joker.type === 'budget' && `+${result.joker.value} CR ${t.jokerRevealBudget}`}
-                {result.joker.type === 'scout' && `+${result.joker.value} ${t.jokerRevealScout}`}
-                {result.joker.type === 'buff' && `+${result.joker.value} ${t.jokerRevealBuff}`}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button className="primary" onClick={onClose} style={{ width: '100%' }}>
-          {t.continueButton}
-        </button>
-      </div>
     </div>
   );
 }

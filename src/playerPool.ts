@@ -1,4 +1,36 @@
-import type { Player } from './types';
+import type { Player, Joker } from './types';
+
+// Joker generation logic
+function generateJoker(): Joker | undefined {
+  // 20% chance for a player to have a joker
+  if (Math.random() > 0.2) return undefined;
+
+  const jokerTypes = [
+    { type: 'budget' as const, weight: 40, valueRange: [5, 15] },
+    { type: 'scout' as const, weight: 30, valueRange: [1, 2] },
+    { type: 'buff' as const, weight: 20, valueRange: [1, 2] },
+    { type: 'free_transfer' as const, weight: 10, valueRange: [5, 10] }
+  ];
+
+  // Weighted random selection
+  const totalWeight = jokerTypes.reduce((sum, j) => sum + j.weight, 0);
+  let random = Math.random() * totalWeight;
+
+  for (const jokerType of jokerTypes) {
+    random -= jokerType.weight;
+    if (random <= 0) {
+      const [min, max] = jokerType.valueRange;
+      const value = Math.floor(Math.random() * (max - min + 1)) + min;
+      return {
+        type: jokerType.type,
+        value,
+        revealed: false
+      };
+    }
+  }
+
+  return undefined;
+}
 
 export const playerPool: Player[] = [
   {
@@ -3548,5 +3580,11 @@ export const playerPool: Player[] = [
 // Shuffle and return specified number of players
 export function getShuffledPool(count: number = 100): Player[] {
   const shuffled = [...playerPool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  const selected = shuffled.slice(0, count);
+
+  // Assign jokers to selected players
+  return selected.map(player => ({
+    ...player,
+    joker: generateJoker()
+  }));
 }
