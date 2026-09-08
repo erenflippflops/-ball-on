@@ -59,6 +59,7 @@ export interface Room {
     highestBid: number;
     timeLeft: number; // seconds
     timerStarted: number; // timestamp
+    skippedPlayers: string[]; // teamIds that have skipped
   };
   maxPlayers: number; // Maximum number of players (2, 4, 6, or 8)
   competition: string; // Competition name (e.g., "Premier League", "Champions League")

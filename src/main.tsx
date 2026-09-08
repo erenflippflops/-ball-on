@@ -121,6 +121,10 @@ function App() {
       setMessage(`${data.teamName} ${data.amount} CR teklif verdi!`);
     });
 
+    socketService.on('player_skipped_bid', (data) => {
+      setMessage(`${data.teamName} pas geçti.`);
+    });
+
     socketService.on('player_skipped', (data) => {
       setMessage(`${data.player.name} için teklif verilmedi, geçildi.`);
     });

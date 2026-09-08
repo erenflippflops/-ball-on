@@ -140,7 +140,8 @@ function finalizeAuction(roomId: string, io: Server) {
         highestBidder: null,
         highestBid: 0,
         timeLeft: 30,
-        timerStarted: Date.now()
+        timerStarted: Date.now(),
+        skippedPlayers: []
       };
 
       // Bot auto-bid logic
@@ -404,10 +405,26 @@ io.on('connection', (socket) => {
       highestBidder: playerTeam.name
     });
     io.to(roomId).emit('room_updated', room);
+
+    // Check if all human players have decided (either bid or skipped)
+    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
+    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
+    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
+
+    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
+
+    if (allHumansDecided) {
+      // All players have decided - finalize immediately
+      const timer = auctionTimers.get(roomId);
+      if (timer) {
+        clearInterval(timer);
+        auctionTimers.delete(roomId);
+      }
+      finalizeAuction(roomId, io);
+    }
   });
 
-  // Skip player
-  // Skip player - now just passes the turn (timer will finalize)
+  // Skip player - mark as skipped and check if all decided
   socket.on('skip_player', ({ roomId }, callback) => {
     const room = rooms.get(roomId);
     if (!room) {
@@ -415,8 +432,41 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Just mark that this player passed - they won't bid anymore
+    if (!room.auctionState) {
+      callback({ success: false, error: 'Açık artırma durumu bulunamadı' });
+      return;
+    }
+
+    const playerTeam = room.teams.find(t => t.id === socket.id);
+    if (!playerTeam) {
+      callback({ success: false, error: 'Takım bulunamadı' });
+      return;
+    }
+
+    // Mark this player as skipped
+    if (!room.auctionState.skippedPlayers.includes(playerTeam.id)) {
+      room.auctionState.skippedPlayers.push(playerTeam.id);
+    }
+
     callback({ success: true });
+    io.to(roomId).emit('player_skipped_bid', { teamName: playerTeam.name });
+
+    // Check if all human players have decided (either bid or skipped)
+    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
+    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
+    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
+
+    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
+
+    if (allHumansDecided) {
+      // All players have decided - finalize immediately
+      const timer = auctionTimers.get(roomId);
+      if (timer) {
+        clearInterval(timer);
+        auctionTimers.delete(roomId);
+      }
+      finalizeAuction(roomId, io);
+    }
   });
 
   // Use scout
