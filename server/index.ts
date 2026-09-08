@@ -404,20 +404,6 @@ io.on('connection', (socket) => {
       highestBidder: playerTeam.name
     });
     io.to(roomId).emit('room_updated', room);
-
-    // Check if this is the only human bidder - if so, end auction immediately
-    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
-    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
-
-    if (humanBidders.length === 1 && humanTeams.length > 1) {
-      // Only one human has bid - end auction immediately
-      const timer = auctionTimers.get(roomId);
-      if (timer) {
-        clearInterval(timer);
-        auctionTimers.delete(roomId);
-      }
-      finalizeAuction(roomId, io);
-    }
   });
 
   // Skip player
