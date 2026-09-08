@@ -39,8 +39,8 @@ function App() {
   const [stealOffer, setStealOffer] = useState('');
   const [stealProtect, setStealProtect] = useState('');
 
-  const me = teams.find(t => t.id === socketService.socket?.id) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
-  const opponent = teams.find(t => t.id !== socketService.socket?.id) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
+  const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
+  const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const avg = me.roster.length ? Math.round(me.roster.reduce((s, p) => s + p.baseOverall, 0) / me.roster.length) : 0;
 
   useEffect(() => {

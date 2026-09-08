@@ -24,6 +24,10 @@ class SocketService {
     }
   }
 
+  getSocketId(): string | undefined {
+    return this.socket?.id;
+  }
+
   createRoom(nickname: string, maxPlayers: number, competition: string): Promise<{ success: boolean; roomId?: string; room?: Room; error?: string }> {
     return new Promise((resolve) => {
       this.socket?.emit('create_room', { nickname, maxPlayers, competition }, (response: any) => {
