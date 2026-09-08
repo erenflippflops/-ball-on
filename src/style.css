@@ -5,24 +5,24 @@
    ============================================ */
 
 :root {
-  /* Colors - Dark Theme with Lime Accent */
+  /* Colors - Dark Theme with Balanced Accent */
   --color-primary: #0F172A;
   --color-on-primary: #FFFFFF;
   --color-secondary: #1E293B;
-  --color-on-secondary: #FFFFFF;
-  --color-accent: #b8ed61;
+  --color-on-secondary: #E2E8F0;
+  --color-accent: #84cc16;  /* Reduced from #b8ed61 - more subtle lime */
   --color-on-accent: #0F172A;
   --color-background: #020617;
-  --color-foreground: #F8FAFC;
-  --color-card: #0a1a1c;
-  --color-card-foreground: #F8FAFC;
-  --color-muted: #1A1E2F;
+  --color-foreground: #F1F5F9;  /* Brighter for better readability */
+  --color-card: #0f1419;  /* Slightly lighter card background */
+  --color-card-foreground: #F1F5F9;
+  --color-muted: #1E293B;
   --color-muted-foreground: #94A3B8;
-  --color-border: #1e3a38;
-  --color-destructive: #DC2626;
+  --color-border: #334155;  /* Lighter border for better definition */
+  --color-destructive: #EF4444;
   --color-on-destructive: #FFFFFF;
-  --color-ring: #b8ed61;
-  --color-success: #16A34A;
+  --color-ring: #84cc16;
+  --color-success: #22C55E;
   --color-warning: #F59E0B;
 
   /* Typography */
@@ -45,7 +45,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(184, 237, 97, 0.3);
+  --shadow-glow: 0 0 20px rgba(132, 204, 22, 0.2);  /* Reduced glow intensity */
 
   /* Transitions */
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -90,7 +90,7 @@ body {
   min-width: 320px;
   font-family: var(--font-body);
   color: var(--color-foreground);
-  background: radial-gradient(circle at 70% 10%, #0a2520 0%, #020617 45%);
+  background: radial-gradient(circle at 70% 10%, #1e293b 0%, #020617 50%);
   min-height: 100vh;
   line-height: 1.6;
 }
@@ -174,8 +174,8 @@ button.primary {
 }
 
 button.primary:hover:not(:disabled) {
-  background: #c9f966;
-  box-shadow: 0 6px 24px rgba(184, 237, 97, 0.4);
+  background: #a3e635;
+  box-shadow: 0 6px 24px rgba(132, 204, 22, 0.35);
 }
 
 button.ghost {
@@ -220,9 +220,10 @@ button.destructive:hover:not(:disabled) {
 }
 
 .quick-bid-buttons button.max {
-  background: linear-gradient(135deg, #b8ed61, #82efc4);
+  background: var(--color-accent);
   color: var(--color-on-accent);
   border: none;
+  font-weight: 700;
 }
 
 /* ============================================
@@ -576,13 +577,13 @@ header {
   width: 42px;
   height: 42px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-accent), #82efc4);
+  background: linear-gradient(135deg, #84cc16, #65a30d);
   color: var(--color-on-accent);
   display: grid;
   place-items: center;
   font-weight: 800;
   font-size: 1.125rem;
-  box-shadow: 0 4px 12px rgba(184, 237, 97, 0.3);
+  box-shadow: 0 4px 12px rgba(132, 204, 22, 0.25);
 }
 
 .online {
@@ -635,10 +636,10 @@ header {
 .bar i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #b8ed61, #82efc4);
+  background: linear-gradient(90deg, #84cc16, #65a30d);
   border-radius: var(--radius-full);
   transition: width var(--transition-slow);
-  box-shadow: 0 0 10px rgba(184, 237, 97, 0.5);
+  box-shadow: 0 0 10px rgba(132, 204, 22, 0.4);
 }
 
 .stat-grid {
@@ -851,13 +852,13 @@ header {
 .player-art {
   height: 220px;
   border-radius: var(--radius-lg);
-  background: linear-gradient(145deg, #b8ed61 0%, #31574d 100%);
-  color: #132314;
+  background: linear-gradient(145deg, #84cc16 0%, #475569 100%);
+  color: #0a0f14;
   padding: var(--space-4);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 12px 32px rgba(184, 237, 97, 0.3);
+  box-shadow: 0 12px 32px rgba(132, 204, 22, 0.25);
   transition: transform var(--transition-base);
   position: relative;
   overflow: hidden;
@@ -1310,8 +1311,8 @@ button,
   width: 100px;
   height: 140px;
   border-radius: var(--radius-md);
-  background: linear-gradient(145deg, #b8ed61 0%, #31574d 100%);
-  color: #132314;
+  background: linear-gradient(145deg, #84cc16 0%, #475569 100%);
+  color: #0a0f14;
   padding: var(--space-3);
   display: flex;
   flex-direction: column;
