@@ -170,9 +170,34 @@ function finalizeAuction(roomId: string, io: Server) {
                     highestBidder: botTeam.name
                   });
                   io.to(roomId).emit('room_updated', room);
+
+                  // Check if all players decided after bot bid
+                  const allTeams = room.teams;
+                  const allBidders = Object.keys(room.auctionState!.currentBids);
+                  const allSkippers = room.auctionState!.skippedPlayers;
+                  const allDecided = allTeams.length === (allBidders.length + allSkippers.length);
+
+                  if (allDecided && allBidders.length === 1) {
+                    const timer = auctionTimers.get(roomId);
+                    if (timer) {
+                      clearInterval(timer);
+                      auctionTimers.delete(roomId);
+                    }
+                    finalizeAuction(roomId, io);
+                  }
                 }
               }
             }, Math.random() * 5000 + 2000); // Bot bids after 2-7 seconds
+          } else {
+            // Bot skips this player immediately
+            if (!room.auctionState.skippedPlayers.includes(botTeam.id)) {
+              room.auctionState.skippedPlayers.push(botTeam.id);
+            }
+          }
+        } else {
+          // Bot roster full, skip
+          if (!room.auctionState.skippedPlayers.includes(botTeam.id)) {
+            room.auctionState.skippedPlayers.push(botTeam.id);
           }
         }
       });
@@ -420,15 +445,15 @@ io.on('connection', (socket) => {
     });
     io.to(roomId).emit('room_updated', room);
 
-    // Check if all human players have decided (either bid or skipped)
-    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
-    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
-    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
+    // Check if all players have decided (either bid or skipped)
+    const allTeams = room.teams;
+    const allBidders = Object.keys(room.auctionState.currentBids);
+    const allSkippers = room.auctionState.skippedPlayers;
 
-    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
+    const allDecided = allTeams.length === (allBidders.length + allSkippers.length);
 
     // Only finalize immediately if there's exactly 1 bidder and others skipped
-    if (allHumansDecided && humanBidders.length === 1) {
+    if (allDecided && allBidders.length === 1) {
       // One bidder, others skipped - finalize immediately
       const timer = auctionTimers.get(roomId);
       if (timer) {
@@ -466,15 +491,15 @@ io.on('connection', (socket) => {
     callback({ success: true });
     io.to(roomId).emit('player_skipped_bid', { teamName: playerTeam.name });
 
-    // Check if all human players have decided (either bid or skipped)
-    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
-    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
-    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
+    // Check if all players have decided (either bid or skipped)
+    const allTeams = room.teams;
+    const allBidders = Object.keys(room.auctionState.currentBids);
+    const allSkippers = room.auctionState.skippedPlayers;
 
-    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
+    const allDecided = allTeams.length === (allBidders.length + allSkippers.length);
 
     // Only finalize immediately if there's exactly 1 bidder and others skipped
-    if (allHumansDecided && humanBidders.length === 1) {
+    if (allDecided && allBidders.length === 1) {
       // One bidder, others skipped - finalize immediately
       const timer = auctionTimers.get(roomId);
       if (timer) {
@@ -484,7 +509,7 @@ io.on('connection', (socket) => {
       finalizeAuction(roomId, io);
     }
     // If no one bid (all skipped), also finalize immediately
-    else if (allHumansDecided && humanBidders.length === 0) {
+    else if (allDecided && allBidders.length === 0) {
       const timer = auctionTimers.get(roomId);
       if (timer) {
         clearInterval(timer);
