@@ -74,6 +74,12 @@ function finalizeAuction(roomId: string, io: Server) {
   const currentPlayer = room.auctionPool[room.currentPlayerIndex];
   if (!currentPlayer) return;
 
+  // Collect all bidders info
+  const allBidders = Object.entries(room.auctionState.currentBids).map(([teamId, amount]) => {
+    const team = room.teams.find(t => t.id === teamId);
+    return { teamName: team?.name || 'Unknown', amount };
+  });
+
   // Award player to highest bidder
   if (room.auctionState.highestBidder) {
     const winnerTeam = room.teams.find(t => t.id === room.auctionState!.highestBidder);
@@ -84,7 +90,8 @@ function finalizeAuction(roomId: string, io: Server) {
       io.to(roomId).emit('player_acquired', {
         player: currentPlayer,
         amount: room.auctionState.highestBid,
-        winner: winnerTeam.name
+        winner: winnerTeam.name,
+        allBidders
       });
     }
   } else {
@@ -397,6 +404,20 @@ io.on('connection', (socket) => {
       highestBidder: playerTeam.name
     });
     io.to(roomId).emit('room_updated', room);
+
+    // Check if this is the only human bidder - if so, end auction immediately
+    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
+    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
+
+    if (humanBidders.length === 1 && humanTeams.length > 1) {
+      // Only one human has bid - end auction immediately
+      const timer = auctionTimers.get(roomId);
+      if (timer) {
+        clearInterval(timer);
+        auctionTimers.delete(roomId);
+      }
+      finalizeAuction(roomId, io);
+    }
   });
 
   // Skip player

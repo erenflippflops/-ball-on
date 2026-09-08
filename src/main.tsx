@@ -82,7 +82,13 @@ function App() {
       if (data.free) {
         setMessage(`🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`);
       } else {
-        setMessage(`✅ ${data.winner} ${data.player.name}'i ${data.amount} CR'ye aldı!`);
+        // Show all bidders and winner
+        let bidInfo = '';
+        if (data.allBidders && data.allBidders.length > 0) {
+          const bidders = data.allBidders.map((b: any) => `${b.teamName}: ${b.amount} CR`).join(', ');
+          bidInfo = `📊 Teklifler: ${bidders}\n`;
+        }
+        setMessage(`${bidInfo}🏆 ${data.winner} kazandı! ${data.player.name} ${data.amount} CR'ye alındı!`);
       }
     });
 
@@ -111,6 +117,7 @@ function App() {
     socketService.on('bid_placed', (data) => {
       setHighestBid(data.highestBid);
       setHighestBidder(data.highestBidder);
+      setBid(data.highestBid + 1); // Auto-increment to next minimum bid
       setMessage(`${data.teamName} ${data.amount} CR teklif verdi!`);
     });
 
