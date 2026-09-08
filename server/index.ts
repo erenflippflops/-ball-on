@@ -473,8 +473,18 @@ io.on('connection', (socket) => {
 
     const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
 
-    if (allHumansDecided) {
-      // All players have decided - finalize immediately
+    // Only finalize immediately if there's exactly 1 bidder and others skipped
+    if (allHumansDecided && humanBidders.length === 1) {
+      // One bidder, others skipped - finalize immediately
+      const timer = auctionTimers.get(roomId);
+      if (timer) {
+        clearInterval(timer);
+        auctionTimers.delete(roomId);
+      }
+      finalizeAuction(roomId, io);
+    }
+    // If no one bid (all skipped), also finalize immediately
+    else if (allHumansDecided && humanBidders.length === 0) {
       const timer = auctionTimers.get(roomId);
       if (timer) {
         clearInterval(timer);
