@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import './style-improved.css';
+import './style.css';
 import { socketService } from './socketService';
 import type { Player, Team, Room, Phase } from './types';
 
