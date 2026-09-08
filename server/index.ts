@@ -315,7 +315,8 @@ io.on('connection', (socket) => {
       highestBidder: null,
       highestBid: 0,
       timeLeft: 30,
-      timerStarted: Date.now()
+      timerStarted: Date.now(),
+      skippedPlayers: []
     };
 
     // Initialize market mechanics
