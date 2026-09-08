@@ -129,6 +129,11 @@ function App() {
       setMessage(`${data.player.name} için teklif verilmedi, geçildi.`);
     });
 
+    socketService.on('time_extended', (data) => {
+      setMessage(data.message);
+      setAuctionTimer(data.newTimeLeft);
+    });
+
     return () => {
       socketService.off('room_updated');
       socketService.off('phase_changed');
@@ -141,6 +146,7 @@ function App() {
       socketService.off('auction_timer');
       socketService.off('bid_placed');
       socketService.off('player_skipped');
+      socketService.off('time_extended');
     };
   }, []);
 

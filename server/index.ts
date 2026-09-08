@@ -398,6 +398,19 @@ io.on('connection', (socket) => {
     room.auctionState.highestBid = amount;
     room.auctionState.highestBidder = playerTeam.id;
 
+    // Time extension: if less than 5 seconds left, add 3 seconds
+    const elapsed = Math.floor((Date.now() - room.auctionState.timerStarted) / 1000);
+    const timeLeft = Math.max(0, 30 - elapsed);
+
+    if (timeLeft < 5) {
+      // Extend timer by 3 seconds
+      room.auctionState.timerStarted = Date.now() - ((30 - timeLeft - 3) * 1000);
+      io.to(roomId).emit('time_extended', {
+        message: `⏱️ Son saniye teklifi! +3 saniye eklendi`,
+        newTimeLeft: timeLeft + 3
+      });
+    }
+
     callback({ success: true });
     io.to(roomId).emit('bid_placed', {
       teamName: playerTeam.name,
@@ -406,23 +419,6 @@ io.on('connection', (socket) => {
       highestBidder: playerTeam.name
     });
     io.to(roomId).emit('room_updated', room);
-
-    // Check if all human players have decided (either bid or skipped)
-    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
-    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
-    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
-
-    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
-
-    if (allHumansDecided) {
-      // All players have decided - finalize immediately
-      const timer = auctionTimers.get(roomId);
-      if (timer) {
-        clearInterval(timer);
-        auctionTimers.delete(roomId);
-      }
-      finalizeAuction(roomId, io);
-    }
   });
 
   // Skip player - mark as skipped and check if all decided
