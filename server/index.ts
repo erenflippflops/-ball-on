@@ -218,7 +218,7 @@ io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   // Create room
-  socket.on('create_room', ({ nickname, maxPlayers }, callback) => {
+  socket.on('create_room', ({ nickname, maxPlayers, competition }, callback) => {
     const roomId = generateRoomId();
     const playerTeam = createTeam(socket.id, nickname || 'Oyuncu');
 
@@ -232,7 +232,8 @@ io.on('connection', (socket) => {
       phase: 'lobby',
       currentPlayerIndex: 0,
       auctionPool: getShuffledPool(150),
-      maxPlayers: roomMaxPlayers
+      maxPlayers: roomMaxPlayers,
+      competition: competition || 'Premier League'
     };
 
     rooms.set(roomId, room);

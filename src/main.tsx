@@ -32,14 +32,15 @@ function App() {
   const [highestBid, setHighestBid] = useState(0);
   const [highestBidder, setHighestBidder] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(2);
+  const [competition, setCompetition] = useState('Premier League');
 
   // Steal phase state
   const [stealTarget, setStealTarget] = useState('');
   const [stealOffer, setStealOffer] = useState('');
   const [stealProtect, setStealProtect] = useState('');
 
-  const me = teams[0] || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
-  const opponent = teams[1] || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
+  const me = teams.find(t => t.id === socketService.socket?.id) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
+  const opponent = teams.find(t => t.id !== socketService.socket?.id) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const avg = me.roster.length ? Math.round(me.roster.reduce((s, p) => s + p.baseOverall, 0) / me.roster.length) : 0;
 
   useEffect(() => {
@@ -133,12 +134,12 @@ function App() {
   }, []);
 
   const start = async () => {
-    const response = await socketService.createRoom(nick || 'Oyuncu', maxPlayers);
+    const response = await socketService.createRoom(nick || 'Oyuncu', maxPlayers, competition);
     if (response.success && response.roomId && response.room) {
       setRoomId(response.roomId);
       setRoom(response.roomId);
       setTeams(response.room.teams);
-      setMessage(`Oda hazır. ${response.room.maxPlayers} kişilik oda oluşturuldu.`);
+      setMessage(`${response.room.competition} odası hazır! ${response.room.maxPlayers} kişilik.`);
     } else {
       setMessage(response.error || 'Oda oluşturulamadı');
     }
@@ -273,6 +274,8 @@ function App() {
             playerCount={playerCount}
             maxPlayers={maxPlayers}
             setMaxPlayers={setMaxPlayers}
+            competition={competition}
+            setCompetition={setCompetition}
           />
         ) : (
           <Game
@@ -334,6 +337,25 @@ function Lobby(p: any) {
         <label>
           Takma ad
           <input value={p.nick} onChange={e => p.setNick(e.target.value)} placeholder="Örn. Kartal11" />
+        </label>
+        <label>
+          Turnuva / Lig
+          <select value={p.competition} onChange={e => p.setCompetition(e.target.value)}>
+            <optgroup label="Ligler">
+              <option value="Premier League">🏴 Premier League</option>
+              <option value="La Liga">🇪🇸 La Liga</option>
+              <option value="Serie A">🇮🇹 Serie A</option>
+              <option value="Bundesliga">🇩🇪 Bundesliga</option>
+              <option value="Ligue 1">🇫🇷 Ligue 1</option>
+            </optgroup>
+            <optgroup label="Turnuvalar">
+              <option value="Champions League">🏆 Champions League</option>
+              <option value="Europa League">🥈 Europa League</option>
+              <option value="FA Cup">🏴 FA Cup</option>
+              <option value="Copa del Rey">🇪🇸 Copa del Rey</option>
+              <option value="Coppa Italia">🇮🇹 Coppa Italia</option>
+            </optgroup>
+          </select>
         </label>
         <label>
           Maksimum oyuncu sayısı
