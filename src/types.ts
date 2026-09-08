@@ -60,6 +60,7 @@ export interface Room {
     timeLeft: number; // seconds
     timerStarted: number; // timestamp
   };
+  maxPlayers: number; // Maximum number of players (2, 4, 6, or 8)
 }
 
 export interface MatchResult {

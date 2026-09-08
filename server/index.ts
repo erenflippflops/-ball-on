@@ -137,35 +137,37 @@ function finalizeAuction(roomId: string, io: Server) {
       };
 
       // Bot auto-bid logic
-      const botTeam = room.teams.find(t => t.id === 'bot');
-      if (botTeam && botTeam.roster.length < 14) {
-        const botAI = new BotAI(botTeam);
-        const positionCheck = canAddPlayer(botTeam, nextPlayer);
+      const botTeams = room.teams.filter(t => t.id.startsWith('bot'));
+      botTeams.forEach(botTeam => {
+        if (botTeam.roster.length < 14) {
+          const botAI = new BotAI(botTeam);
+          const positionCheck = canAddPlayer(botTeam, nextPlayer);
 
-        if (botAI.shouldBid(nextPlayer) && positionCheck.allowed) {
-          setTimeout(() => {
-            const botBid = botAI.calculateBid(nextPlayer);
-            const slotsRemaining = 14 - botTeam.roster.length;
+          if (botAI.shouldBid(nextPlayer) && positionCheck.allowed) {
+            setTimeout(() => {
+              const botBid = botAI.calculateBid(nextPlayer);
+              const slotsRemaining = 14 - botTeam.roster.length;
 
-            if (botBid <= botTeam.budget - (slotsRemaining - 1)) {
-              const room = rooms.get(roomId);
-              if (room && room.auctionState) {
-                room.auctionState.currentBids[botTeam.id] = botBid;
-                room.auctionState.highestBid = botBid;
-                room.auctionState.highestBidder = botTeam.id;
+              if (botBid <= botTeam.budget - (slotsRemaining - 1)) {
+                const room = rooms.get(roomId);
+                if (room && room.auctionState && botBid > room.auctionState.highestBid) {
+                  room.auctionState.currentBids[botTeam.id] = botBid;
+                  room.auctionState.highestBid = botBid;
+                  room.auctionState.highestBidder = botTeam.id;
 
-                io.to(roomId).emit('bid_placed', {
-                  teamName: botTeam.name,
-                  amount: botBid,
-                  highestBid: botBid,
-                  highestBidder: botTeam.name
-                });
-                io.to(roomId).emit('room_updated', room);
+                  io.to(roomId).emit('bid_placed', {
+                    teamName: botTeam.name,
+                    amount: botBid,
+                    highestBid: botBid,
+                    highestBidder: botTeam.name
+                  });
+                  io.to(roomId).emit('room_updated', room);
+                }
               }
-            }
-          }, Math.random() * 5000 + 2000); // Bot bids after 2-7 seconds
+            }, Math.random() * 5000 + 2000); // Bot bids after 2-7 seconds
+          }
         }
-      }
+      });
 
       io.to(roomId).emit('next_player', { player: nextPlayer });
       startAuctionTimer(roomId, io);
@@ -216,16 +218,21 @@ io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
   // Create room
-  socket.on('create_room', ({ nickname }, callback) => {
+  socket.on('create_room', ({ nickname, maxPlayers }, callback) => {
     const roomId = generateRoomId();
     const playerTeam = createTeam(socket.id, nickname || 'Oyuncu');
+
+    // Validate maxPlayers
+    const validMaxPlayers = [2, 4, 6, 8];
+    const roomMaxPlayers = validMaxPlayers.includes(maxPlayers) ? maxPlayers : 2;
 
     const room: Room = {
       id: roomId,
       teams: [playerTeam],
       phase: 'lobby',
       currentPlayerIndex: 0,
-      auctionPool: getShuffledPool(150)
+      auctionPool: getShuffledPool(150),
+      maxPlayers: roomMaxPlayers
     };
 
     rooms.set(roomId, room);
@@ -251,14 +258,15 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Check if room is full (max 2 players)
-    if (room.teams.length >= 2) {
+    // Check if room is full
+    if (room.teams.length >= room.maxPlayers) {
       callback({ success: false, error: 'Oda dolu' });
       return;
     }
 
     // Add new player
-    const newTeam = createTeam(socket.id, nickname || 'Oyuncu 2');
+    const playerNumber = room.teams.length + 1;
+    const newTeam = createTeam(socket.id, nickname || `Oyuncu ${playerNumber}`);
     room.teams.push(newTeam);
 
     socket.join(roomId);
@@ -275,9 +283,16 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Check if we have 2 players, if not add a bot
-    if (room.teams.length < 2) {
-      const botTeam = createTeam('bot', 'Bot Atlas');
+    // Check if we need to add a bot to make it even
+    const currentPlayerCount = room.teams.length;
+    if (currentPlayerCount % 2 !== 0) {
+      // Odd number - add 1 bot
+      const botTeam = createTeam('bot-1', 'Bot Atlas');
+      botTeam.ready = true;
+      room.teams.push(botTeam);
+    } else if (currentPlayerCount < 2) {
+      // Less than 2 players - add bot
+      const botTeam = createTeam('bot-1', 'Bot Atlas');
       botTeam.ready = true;
       room.teams.push(botTeam);
     }

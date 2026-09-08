@@ -31,6 +31,7 @@ function App() {
   const [auctionTimer, setAuctionTimer] = useState(30);
   const [highestBid, setHighestBid] = useState(0);
   const [highestBidder, setHighestBidder] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(2);
 
   // Steal phase state
   const [stealTarget, setStealTarget] = useState('');
@@ -48,6 +49,7 @@ function App() {
       setTeams(room.teams);
       setPhase(room.phase);
       setPlayerCount(room.teams.length);
+      setMaxPlayers(room.maxPlayers || 2);
       if (room.matchResult) {
         setMatchResult(room.matchResult);
       }
@@ -75,7 +77,7 @@ function App() {
       setBid(1);
     });
 
-    socketService.onPlayerAcquired((data) => {
+    socketService.onPlayerAcquired((data: any) => {
       if (data.free) {
         setMessage(`🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`);
       } else {
@@ -131,12 +133,12 @@ function App() {
   }, []);
 
   const start = async () => {
-    const response = await socketService.createRoom(nick || 'Oyuncu');
+    const response = await socketService.createRoom(nick || 'Oyuncu', maxPlayers);
     if (response.success && response.roomId && response.room) {
       setRoomId(response.roomId);
       setRoom(response.roomId);
       setTeams(response.room.teams);
-      setMessage('Oda hazır. Oyunu başlatmak için hazırsın.');
+      setMessage(`Oda hazır. ${response.room.maxPlayers} kişilik oda oluşturuldu.`);
     } else {
       setMessage(response.error || 'Oda oluşturulamadı');
     }
@@ -269,6 +271,8 @@ function App() {
             begin={begin}
             message={message}
             playerCount={playerCount}
+            maxPlayers={maxPlayers}
+            setMaxPlayers={setMaxPlayers}
           />
         ) : (
           <Game
@@ -331,6 +335,15 @@ function Lobby(p: any) {
           Takma ad
           <input value={p.nick} onChange={e => p.setNick(e.target.value)} placeholder="Örn. Kartal11" />
         </label>
+        <label>
+          Maksimum oyuncu sayısı
+          <select value={p.maxPlayers} onChange={e => p.setMaxPlayers(Number(e.target.value))}>
+            <option value={2}>2 Kişi (1v1)</option>
+            <option value={4}>4 Kişi</option>
+            <option value={6}>6 Kişi</option>
+            <option value={8}>8 Kişi</option>
+          </select>
+        </label>
         <button className="primary" onClick={p.start}>
           + Yeni oda oluştur
         </button>
@@ -345,8 +358,8 @@ function Lobby(p: any) {
         </div>
         {p.room && (
           <div className="lobby-ready">
-            <span className="dot" /> {p.room} odası · {p.playerCount || 1}/2 Oyuncu
-            {p.playerCount >= 2 && <span style={{ color: '#b8ed61', marginLeft: '10px' }}>✓ Hazır</span>}
+            <span className="dot" /> {p.room} odası · {p.playerCount || 1}/{p.maxPlayers} Oyuncu
+            {p.playerCount >= p.maxPlayers && <span style={{ color: '#b8ed61', marginLeft: '10px' }}>✓ Hazır</span>}
             <button className="primary" onClick={p.begin}>
               Oyunu başlat →
             </button>
