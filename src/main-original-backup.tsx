@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import './style-improved.css';
+import './style.css';
 import { socketService } from './socketService';
 import type { Player, Team, Room, Phase } from './types';
 
@@ -21,7 +21,6 @@ function App() {
   const [current, setCurrent] = useState<Player | null>(null);
   const [bid, setBid] = useState(1);
   const [message, setMessage] = useState('Odayı oluştur veya mevcut bir odaya katıl.');
-  const [notification, setNotification] = useState<{ text: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [formation, setFormation] = useState('4-3-3');
   const [tactic, setTactic] = useState('Balanced');
   const [matchResult, setMatchResult] = useState<any>(null);
@@ -43,12 +42,6 @@ function App() {
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const avg = me.roster.length ? Math.round(me.roster.reduce((s, p) => s + p.baseOverall, 0) / me.roster.length) : 0;
-
-  // Show center notification
-  const showNotification = (text: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-    setNotification({ text, type });
-    setTimeout(() => setNotification(null), 3000);
-  };
 
   useEffect(() => {
     const socket = socketService.connect();
@@ -87,18 +80,15 @@ function App() {
 
     socketService.onPlayerAcquired((data: any) => {
       if (data.free) {
-        const msg = `🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`;
-        setMessage(msg);
-        showNotification(msg, 'info');
+        setMessage(`🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`);
       } else {
+        // Show all bidders and winner
         let bidInfo = '';
         if (data.allBidders && data.allBidders.length > 0) {
           const bidders = data.allBidders.map((b: any) => `${b.teamName}: ${b.amount} CR`).join(', ');
           bidInfo = `📊 Teklifler: ${bidders}\n`;
         }
-        const msg = `🏆 ${data.winner} kazandı! ${data.player.name} ${data.amount} CR'ye alındı!`;
-        setMessage(`${bidInfo}${msg}`);
-        showNotification(msg, 'success');
+        setMessage(`${bidInfo}🏆 ${data.winner} kazandı! ${data.player.name} ${data.amount} CR'ye alındı!`);
       }
     });
 
@@ -114,13 +104,10 @@ function App() {
     socketService.on('market_shift', (data) => {
       setMarketTrend(data.trend);
       setMessage(data.message);
-      showNotification(data.message, 'warning');
     });
 
     socketService.on('player_joined', (data) => {
-      const msg = `🎮 ${data.teamName} odaya katıldı!`;
-      setMessage(msg);
-      showNotification(msg, 'success');
+      setMessage(`🎮 ${data.teamName} odaya katıldı!`);
     });
 
     socketService.on('auction_timer', (data) => {
@@ -130,26 +117,21 @@ function App() {
     socketService.on('bid_placed', (data) => {
       setHighestBid(data.highestBid);
       setHighestBidder(data.highestBidder);
-      setBid(data.highestBid + 1);
-      const msg = `${data.teamName} ${data.amount} CR teklif verdi!`;
-      setMessage(msg);
-      showNotification(msg, 'info');
+      setBid(data.highestBid + 1); // Auto-increment to next minimum bid
+      setMessage(`${data.teamName} ${data.amount} CR teklif verdi!`);
     });
 
     socketService.on('player_skipped_bid', (data) => {
-      const msg = `${data.teamName} pas geçti.`;
-      setMessage(msg);
+      setMessage(`${data.teamName} pas geçti.`);
     });
 
     socketService.on('player_skipped', (data) => {
-      const msg = `${data.player.name} için teklif verilmedi, geçildi.`;
-      setMessage(msg);
+      setMessage(`${data.player.name} için teklif verilmedi, geçildi.`);
     });
 
     socketService.on('time_extended', (data) => {
       setMessage(data.message);
       setAuctionTimer(data.newTimeLeft);
-      showNotification(data.message, 'warning');
     });
 
     return () => {
@@ -177,7 +159,6 @@ function App() {
       setMessage(`${response.room.competition} odası hazır! ${response.room.maxPlayers} kişilik.`);
     } else {
       setMessage(response.error || 'Oda oluşturulamadı');
-      showNotification(response.error || 'Oda oluşturulamadı', 'error');
     }
   };
 
@@ -188,10 +169,8 @@ function App() {
       setRoomId(room);
       setTeams(response.room.teams);
       setMessage('Odaya katıldın!');
-      showNotification('Odaya başarıyla katıldın!', 'success');
     } else {
       setMessage(response.error || 'Odaya katılınamadı');
-      showNotification(response.error || 'Odaya katılınamadı', 'error');
     }
   };
 
@@ -200,26 +179,21 @@ function App() {
     const response = await socketService.startGame(roomId);
     if (response.success) {
       setMessage('Açık artırma başladı!');
-      showNotification('Açık artırma başladı!', 'success');
     } else {
       setMessage(response.error || 'Oyun başlatılamadı');
-      showNotification(response.error || 'Oyun başlatılamadı', 'error');
     }
   };
 
   const buy = async (amount: number) => {
     if (!current || !roomId) return;
     if (amount > me.budget - (14 - me.roster.length)) {
-      const msg = 'Bu teklif kadro rezervini ihlal ediyor.';
-      setMessage(msg);
-      showNotification(msg, 'error');
+      setMessage('Bu teklif kadro rezervini ihlal ediyor.');
       return;
     }
 
     const response = await socketService.placeBid(roomId, amount);
     if (!response.success) {
       setMessage(response.error || 'Teklif başarısız');
-      showNotification(response.error || 'Teklif başarısız', 'error');
     }
   };
 
@@ -234,7 +208,6 @@ function App() {
   const scout = async () => {
     if (me.scouts <= 0) {
       setMessage('Scout hakkın kalmadı.');
-      showNotification('Scout hakkın kalmadı.', 'error');
       return;
     }
     if (!roomId) return;
@@ -242,12 +215,9 @@ function App() {
     const response = await socketService.useScout(roomId);
     if (response.success) {
       const { tier, playerName, position, overall } = response;
-      const msg = `🔎 Scout: ${playerName} (${position}) - ${overall} OVR - ${tier?.toUpperCase()}`;
-      setMessage(msg);
-      showNotification(msg, 'info');
+      setMessage(`🔎 Scout raporu: Sonraki oyuncu ${playerName} (${position}) - ${overall} OVR - Kalite: ${tier?.toUpperCase()}`);
     } else {
       setMessage(response.error || 'Scout kullanılamadı');
-      showNotification(response.error || 'Scout kullanılamadı', 'error');
     }
   };
 
@@ -260,16 +230,13 @@ function App() {
     if (!roomId) return;
     if (!stealTarget || !stealOffer || !stealProtect) {
       setMessage('Lütfen tüm seçimleri yapın!');
-      showNotification('Lütfen tüm seçimleri yapın!', 'error');
       return;
     }
     const response = await socketService.submitSteal(roomId, stealTarget, stealOffer, stealProtect);
     if (response.success) {
       setMessage('Seçiminiz kaydedildi, sonuçlar işleniyor...');
-      showNotification('Seçiminiz kaydedildi!', 'success');
     } else {
       setMessage(response.error || 'Seçim başarısız');
-      showNotification(response.error || 'Seçim başarısız', 'error');
     }
   };
 
@@ -296,15 +263,6 @@ function App() {
 
   return (
     <div className="app">
-      {/* Center Notification System */}
-      {notification && (
-        <div className="notification-center">
-          <div className={`notification ${notification.type}`}>
-            {notification.text}
-          </div>
-        </div>
-      )}
-
       <header>
         <div className="brand">
           <span className="ball">⚽</span>
@@ -375,43 +333,6 @@ function App() {
           />
         )}
       </main>
-    </div>
-  );
-}
-
-// Circular Timer Component
-function CircularTimer({ timeLeft, total = 30 }: { timeLeft: number; total?: number }) {
-  const radius = 46;
-  const circumference = 2 * Math.PI * radius;
-  const progress = (timeLeft / total) * circumference;
-
-  const getTimerClass = () => {
-    if (timeLeft <= 5) return 'critical';
-    if (timeLeft <= 10) return 'warning';
-    return '';
-  };
-
-  return (
-    <div className="timer-container">
-      <svg width="100" height="100" className="timer-circle">
-        <circle
-          className="timer-bg"
-          cx="50"
-          cy="50"
-          r={radius}
-        />
-        <circle
-          className={`timer-progress ${getTimerClass()}`}
-          cx="50"
-          cy="50"
-          r={radius}
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference - progress}
-        />
-      </svg>
-      <div className={`timer-text ${getTimerClass()}`}>
-        {timeLeft}
-      </div>
     </div>
   );
 }
@@ -490,8 +411,9 @@ function Lobby(p: any) {
 }
 
 function Game(p: any) {
-  const { me } = p;
+  const { me, current } = p;
 
+  // Calculate position stats
   const getPositionCategory = (pos: string) => {
     if (pos === 'GK') return 'GK';
     if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF';
@@ -547,11 +469,11 @@ function Game(p: any) {
             <small>BUFF</small>
           </div>
         </div>
-        <div style={{ margin: '15px 0', padding: '12px', background: 'rgba(10, 26, 21, 0.6)', borderRadius: '8px', border: '1px solid rgba(26, 51, 41, 0.5)' }}>
+        <div style={{ margin: '15px 0', padding: '12px', background: '#0a1a15', borderRadius: '8px', border: '1px solid #1a3329' }}>
           <h4 style={{ margin: '0 0 8px', fontSize: '11px', color: '#9ab3a8', fontWeight: 600 }}>POZİSYON DAĞILIMI</h4>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '11px' }}>
             {Object.entries(positionStats).map(([pos, count]) => (
-              <div key={pos} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px', background: 'rgba(7, 23, 19, 0.8)', borderRadius: '4px' }}>
+              <div key={pos} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px', background: '#071713', borderRadius: '4px' }}>
                 <span style={{ color: '#b8ed61' }}>{pos}</span>
                 <b style={{ color: count >= positionLimits[pos as keyof typeof positionLimits] ? '#ff6b6b' : '#fff' }}>
                   {count}/{positionLimits[pos as keyof typeof positionLimits]}
@@ -590,7 +512,7 @@ function Game(p: any) {
       </div>
       <aside className="rightbar">
         <h3>PİYASA DURUMU</h3>
-        <div style={{ padding: '12px', background: 'rgba(17, 44, 36, 0.6)', borderRadius: '5px', marginBottom: '15px', border: '1px solid rgba(184, 237, 97, 0.1)' }}>
+        <div style={{ padding: '12px', background: '#112c24', borderRadius: '5px', marginBottom: '15px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
             {p.marketTrend === 'boom' && <span style={{ fontSize: '20px' }}>📈</span>}
             {p.marketTrend === 'crash' && <span style={{ fontSize: '20px' }}>📉</span>}
@@ -609,7 +531,7 @@ function Game(p: any) {
         {p.gossipStars && p.gossipStars.length > 0 && (
           <>
             <h3>TRANSFER DEDİKODULARI</h3>
-            <div style={{ padding: '10px', background: 'rgba(17, 44, 36, 0.6)', borderRadius: '5px', marginBottom: '15px', border: '1px solid rgba(184, 237, 97, 0.1)' }}>
+            <div style={{ padding: '10px', background: '#112c24', borderRadius: '5px', marginBottom: '15px' }}>
               <span style={{ fontSize: '10px', color: '#729187', display: 'block', marginBottom: '8px' }}>
                 📰 Havuzda görülebilecek yıldızlar:
               </span>
@@ -686,116 +608,78 @@ function Auction(p: any) {
   const x = p.current as Player;
   if (!x) return null;
 
-  const maxBid = Math.max(1, p.me.budget - (14 - p.me.roster.length));
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="auction">
       <div className="auction-top">
         <span className="kicker">AÇIK ARTIRMA · {p.me.roster.length + 1}. TUR</span>
-        <CircularTimer timeLeft={p.auctionTimer} total={30} />
+        <span className="timer" style={{ color: p.auctionTimer <= 10 ? '#ff7b6e' : '#b8ed61' }}>
+          {formatTime(p.auctionTimer)}
+        </span>
       </div>
       {p.highestBid > 0 && (
-        <div style={{ padding: '12px', background: 'rgba(16, 45, 37, 0.6)', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', border: '1px solid rgba(184, 237, 97, 0.2)' }}>
+        <div style={{ padding: '12px', background: '#102d25', borderRadius: '5px', marginBottom: '15px', textAlign: 'center' }}>
           <small style={{ color: '#9ab3a8', fontSize: '11px', display: 'block' }}>EN YÜKSEK TEKLİF</small>
-          <strong style={{ color: '#b8ed61', fontSize: '24px', fontFamily: 'var(--font-heading)' }}>{p.highestBid} CR</strong>
+          <strong style={{ color: '#b8ed61', fontSize: '20px' }}>{p.highestBid} CR</strong>
           <span style={{ color: '#82a49a', fontSize: '11px', display: 'block', marginTop: '4px' }}>
             {p.highestBidder}
           </span>
         </div>
       )}
       <div className="player-card">
-        <div className={`player-art`}>
+        <div className={`player-art ${x.primaryPosition}`}>
           <span>{x.primaryPosition}</span>
           <strong>{x.baseOverall}</strong>
         </div>
-        <div className="player-info">
+        <div>
           <h1>{x.name}</h1>
           <p>
             {posNames[x.primaryPosition]} · {x.age} yaş · {x.archetype}
           </p>
-          <div className="tier">
-            {x.marketTier.toUpperCase()}
-            <small>kalite</small>
-          </div>
           <div className="attributes">
-            <div>
-              <b>{x.attributes.pace}</b>
-              PACE
-            </div>
-            <div>
-              <b>{x.attributes.shooting}</b>
-              ŞUT
-            </div>
-            <div>
-              <b>{x.attributes.passing}</b>
-              PAS
-            </div>
-            <div>
-              <b>{x.attributes.defending}</b>
-              DEF
-            </div>
+            <span>
+              PACE <b>{x.attributes.pace}</b>
+            </span>
+            <span>
+              ŞUT <b>{x.attributes.shooting}</b>
+            </span>
+            <span>
+              PAS <b>{x.attributes.passing}</b>
+            </span>
+            <span>
+              DEF <b>{x.attributes.defending}</b>
+            </span>
           </div>
+        </div>
+        <div className="tier">
+          {x.marketTier.toUpperCase()}
+          <small>kalite</small>
         </div>
       </div>
       <div className="bid-row">
-        <div className="bid-info">
-          <div>
-            <small style={{ fontSize: '12px', color: 'var(--color-muted-foreground)' }}>TEKLİFİN</small>
-            <strong>{p.bid} CR</strong>
-          </div>
-          <input
-            type="number"
-            min={Math.max(1, p.highestBid + 1)}
-            max={maxBid}
-            value={p.bid}
-            onChange={e => p.setBid(Math.min(maxBid, Math.max(p.highestBid + 1, +e.target.value)))}
-          />
+        <div>
+          <small>TEKLİFİN</small>
+          <strong>{p.bid} CR</strong>
         </div>
-        <div className="bid-controls">
-          <input
-            type="range"
-            min={Math.max(1, p.highestBid + 1)}
-            max={maxBid}
-            value={p.bid}
-            onChange={e => p.setBid(+e.target.value)}
-          />
-        </div>
-        {/* Quick Bid Buttons */}
-        <div className="quick-bid-buttons">
-          <button
-            onClick={() => p.setBid(Math.min(maxBid, Math.max(p.highestBid + 1, p.bid + 1)))}
-            disabled={p.bid >= maxBid}
-          >
-            +1
-          </button>
-          <button
-            onClick={() => p.setBid(Math.min(maxBid, Math.max(p.highestBid + 1, p.bid + 5)))}
-            disabled={p.bid >= maxBid}
-          >
-            +5
-          </button>
-          <button
-            onClick={() => p.setBid(Math.min(maxBid, Math.max(p.highestBid + 1, p.bid + 10)))}
-            disabled={p.bid >= maxBid}
-          >
-            +10
-          </button>
-          <button
-            className="max"
-            onClick={() => p.setBid(maxBid)}
-            disabled={p.bid >= maxBid}
-          >
-            MAX
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-          <button className="primary" onClick={() => p.buy(p.bid)} disabled={p.bid <= p.highestBid} style={{ flex: 1 }}>
-            Teklif ver · {p.bid} CR
-          </button>
-          <button className="ghost" onClick={p.skip}>
-            Pas geç
-          </button>
-        </div>
+        <input
+          type="range"
+          min={Math.max(1, p.highestBid + 1)}
+          max={Math.max(1, p.me.budget - (14 - p.me.roster.length))}
+          value={p.bid}
+          onChange={e => p.setBid(+e.target.value)}
+        />
+        <button className="primary" onClick={() => p.buy(p.bid)} disabled={p.bid <= p.highestBid}>
+          Teklif ver · {p.bid} CR
+        </button>
+        <button onClick={() => p.buy(Math.max(p.highestBid + 1, p.me.budget - (14 - p.me.roster.length)))}>ALL-IN</button>
+        <button className="ghost" onClick={p.skip}>
+          Pas geç
+        </button>
       </div>
       <div className="scout">
         <b>SCOUT HAKLARI</b>
@@ -805,9 +689,6 @@ function Auction(p: any) {
     </div>
   );
 }
-
-// ... (Rest of components remain the same - Steal, Trade, Lineup, Tactics, Panel, Match, Result)
-// Copy them from original file
 
 function Steal(p: any) {
   const opponent = p.opponent || { roster: [] };
@@ -858,8 +739,9 @@ function Steal(p: any) {
 }
 
 function Trade(p: any) {
-  const { tradeOffers, me } = p;
+  const { tradeOffers, me, opponent } = p;
 
+  // If there are no trade offers, show a simple message
   if (!tradeOffers || tradeOffers.length === 0) {
     return (
       <Panel title="Serbest takas" subtitle="Çalma fazı tamamlandı. Takas teklifi yok.">
@@ -874,6 +756,7 @@ function Trade(p: any) {
     );
   }
 
+  // Show the first trade offer
   const trade = tradeOffers[0];
   const isReceiving = trade.to === me.id;
   const theyGive = isReceiving ? trade.give : trade.want;
@@ -881,9 +764,9 @@ function Trade(p: any) {
 
   return (
     <Panel title="Takas teklifi" subtitle="Çalma fazından gelen takas teklifini kabul et veya reddet.">
-      <div style={{ padding: '20px', background: 'rgba(12, 33, 28, 0.6)', borderRadius: '12px', marginBottom: '20px', border: '1px solid rgba(184, 237, 97, 0.1)' }}>
+      <div style={{ padding: '20px', background: '#0c211c', borderRadius: '8px', marginBottom: '20px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '20px', alignItems: 'center' }}>
-          <div style={{ textAlign: 'center', padding: '15px', background: 'rgba(7, 23, 19, 0.8)', borderRadius: '8px' }}>
+          <div style={{ textAlign: 'center', padding: '15px', background: '#071713', borderRadius: '8px' }}>
             <small style={{ color: '#9ab3a8', fontSize: '11px', display: 'block', marginBottom: '8px' }}>
               {isReceiving ? 'Rakip Veriyor' : 'Sen Veriyorsun'}
             </small>
@@ -894,7 +777,7 @@ function Trade(p: any) {
 
           <div style={{ fontSize: '24px', color: '#9ab3a8' }}>⇄</div>
 
-          <div style={{ textAlign: 'center', padding: '15px', background: 'rgba(7, 23, 19, 0.8)', borderRadius: '8px' }}>
+          <div style={{ textAlign: 'center', padding: '15px', background: '#071713', borderRadius: '8px' }}>
             <small style={{ color: '#9ab3a8', fontSize: '11px', display: 'block', marginBottom: '8px' }}>
               {isReceiving ? 'Sen Veriyorsun' : 'Rakip Veriyor'}
             </small>
@@ -918,11 +801,221 @@ function Trade(p: any) {
 }
 
 function Lineup(p: any) {
+  const me = p.me || { roster: [] };
+
+  // Helper to get position category
+  const getPositionCat = (pos: string) => {
+    if (pos === 'GK') return 'GK';
+    if (['CB', 'LB', 'RB', 'LWB', 'RWB'].includes(pos)) return 'DEF';
+    if (['DM', 'CM', 'AM', 'LM', 'RM'].includes(pos)) return 'MID';
+    return 'ATT';
+  };
+
+  // Formation requirements: [GK, DEF, MID, ATT]
+  const formations: Record<string, number[]> = {
+    '4-3-3': [1, 4, 3, 3],
+    '4-4-2': [1, 4, 4, 2],
+    '4-2-3-1': [1, 4, 5, 1],
+    '3-5-2': [1, 3, 5, 2]
+  };
+
+  const formationNeeds = formations[p.formation] || [1, 4, 3, 3];
+
+  // Auto-select best 11 based on formation needs
+  const selectBest11 = () => {
+    const selected: Player[] = [];
+    const remaining = [...me.roster];
+
+    // Sort by overall within each category
+    const byCategory: Record<string, Player[]> = {
+      GK: remaining.filter(p => getPositionCat(p.primaryPosition) === 'GK').sort((a, b) => b.baseOverall - a.baseOverall),
+      DEF: remaining.filter(p => getPositionCat(p.primaryPosition) === 'DEF').sort((a, b) => b.baseOverall - a.baseOverall),
+      MID: remaining.filter(p => getPositionCat(p.primaryPosition) === 'MID').sort((a, b) => b.baseOverall - a.baseOverall),
+      ATT: remaining.filter(p => getPositionCat(p.primaryPosition) === 'ATT').sort((a, b) => b.baseOverall - a.baseOverall)
+    };
+
+    // Pick by formation needs
+    const categories = ['GK', 'DEF', 'MID', 'ATT'];
+    categories.forEach((cat, idx) => {
+      const needed = formationNeeds[idx];
+      const available = byCategory[cat];
+      selected.push(...available.slice(0, needed));
+    });
+
+    // Fill remaining slots with best overall players if we don't have 11
+    if (selected.length < 11) {
+      const alreadySelected = new Set(selected.map(p => p.id));
+      const others = me.roster
+        .filter((p: Player) => !alreadySelected.has(p.id))
+        .sort((a: Player, b: Player) => b.baseOverall - a.baseOverall);
+      selected.push(...others.slice(0, 11 - selected.length));
+    }
+
+    return selected.slice(0, 11);
+  };
+
+  const best11 = selectBest11();
+
+  // Position mapping for visual display based on formation
+  const getSlotPositions = () => {
+    const gk = best11.filter(p => getPositionCat(p.primaryPosition) === 'GK')[0];
+    const def = best11.filter(p => getPositionCat(p.primaryPosition) === 'DEF');
+    const mid = best11.filter(p => getPositionCat(p.primaryPosition) === 'MID');
+    const att = best11.filter(p => getPositionCat(p.primaryPosition) === 'ATT');
+
+    const slots: Array<{ player: Player; style: React.CSSProperties }> = [];
+
+    // GK (always bottom center)
+    if (gk) {
+      slots.push({
+        player: gk,
+        style: { left: '47%', bottom: '10px' }
+      });
+    }
+
+    // DEF positions based on formation
+    if (p.formation === '4-3-3' || p.formation === '4-4-2' || p.formation === '4-2-3-1') {
+      // 4 defenders
+      const defPositions = [
+        { left: '10%', bottom: '80px' },   // LB
+        { left: '35%', bottom: '70px' },   // LCB
+        { left: '60%', bottom: '70px' },   // RCB
+        { right: '10%', bottom: '80px' }   // RB
+      ];
+      def.slice(0, 4).forEach((player, i) => {
+        slots.push({ player, style: defPositions[i] });
+      });
+    } else if (p.formation === '3-5-2') {
+      // 3 defenders
+      const defPositions = [
+        { left: '25%', bottom: '75px' },   // LCB
+        { left: '47%', bottom: '70px' },   // CB
+        { left: '70%', bottom: '75px' }    // RCB
+      ];
+      def.slice(0, 3).forEach((player, i) => {
+        slots.push({ player, style: defPositions[i] });
+      });
+    }
+
+    // MID positions based on formation
+    if (p.formation === '4-3-3') {
+      // 3 midfielders
+      const midPositions = [
+        { left: '25%', bottom: '160px' },  // LCM
+        { left: '47%', bottom: '155px' },  // CM
+        { left: '70%', bottom: '160px' }   // RCM
+      ];
+      mid.slice(0, 3).forEach((player, i) => {
+        slots.push({ player, style: midPositions[i] });
+      });
+    } else if (p.formation === '4-4-2') {
+      // 4 midfielders
+      const midPositions = [
+        { left: '10%', bottom: '160px' },  // LM
+        { left: '35%', bottom: '155px' },  // LCM
+        { left: '60%', bottom: '155px' },  // RCM
+        { right: '10%', bottom: '160px' }  // RM
+      ];
+      mid.slice(0, 4).forEach((player, i) => {
+        slots.push({ player, style: midPositions[i] });
+      });
+    } else if (p.formation === '4-2-3-1') {
+      // 5 midfielders (2 CDM + 3 CAM)
+      const midPositions = [
+        { left: '35%', bottom: '145px' },  // LCDM
+        { left: '60%', bottom: '145px' },  // RCDM
+        { left: '10%', bottom: '220px' },  // LAM
+        { left: '47%', bottom: '215px' },  // CAM
+        { right: '10%', bottom: '220px' }  // RAM
+      ];
+      mid.slice(0, 5).forEach((player, i) => {
+        slots.push({ player, style: midPositions[i] });
+      });
+    } else if (p.formation === '3-5-2') {
+      // 5 midfielders
+      const midPositions = [
+        { left: '5%', bottom: '165px' },   // LWB
+        { left: '28%', bottom: '155px' },  // LCM
+        { left: '47%', bottom: '150px' },  // CM
+        { left: '67%', bottom: '155px' },  // RCM
+        { right: '5%', bottom: '165px' }   // RWB
+      ];
+      mid.slice(0, 5).forEach((player, i) => {
+        slots.push({ player, style: midPositions[i] });
+      });
+    }
+
+    // ATT positions based on formation
+    if (p.formation === '4-3-3') {
+      // 3 attackers
+      const attPositions = [
+        { left: '15%', bottom: '260px' },  // LW
+        { left: '47%', bottom: '255px' },  // ST
+        { right: '15%', bottom: '260px' }  // RW
+      ];
+      att.slice(0, 3).forEach((player, i) => {
+        slots.push({ player, style: attPositions[i] });
+      });
+    } else if (p.formation === '4-4-2') {
+      // 2 strikers
+      const attPositions = [
+        { left: '35%', bottom: '260px' },  // LST
+        { left: '60%', bottom: '260px' }   // RST
+      ];
+      att.slice(0, 2).forEach((player, i) => {
+        slots.push({ player, style: attPositions[i] });
+      });
+    } else if (p.formation === '4-2-3-1') {
+      // 1 striker
+      const attPositions = [
+        { left: '47%', bottom: '280px' }   // ST
+      ];
+      att.slice(0, 1).forEach((player, i) => {
+        slots.push({ player, style: attPositions[i] });
+      });
+    } else if (p.formation === '3-5-2') {
+      // 2 strikers
+      const attPositions = [
+        { left: '35%', bottom: '265px' },  // LST
+        { left: '60%', bottom: '265px' }   // RST
+      ];
+      att.slice(0, 2).forEach((player, i) => {
+        slots.push({ player, style: attPositions[i] });
+      });
+    }
+
+    return slots;
+  };
+
+  const positionedPlayers = getSlotPositions();
+
   return (
     <Panel title="İlk 11 ve diziliş" subtitle="En iyi 11 oyuncun otomatik seçildi. Formasyon seç ve kaydet.">
-      <p style={{ textAlign: 'center', padding: '40px', color: '#9ab3a8' }}>
-        Lineup component - Coming soon
-      </p>
+      <div className="formation">
+        <select value={p.formation} onChange={e => p.setFormation(e.target.value)}>
+          <option>4-3-3</option>
+          <option>4-4-2</option>
+          <option>4-2-3-1</option>
+          <option>3-5-2</option>
+        </select>
+        <div className="pitch">
+          {positionedPlayers.map(({ player, style }) => (
+            <span key={player.id} className="slot" style={style} title={player.name}>
+              {player.primaryPosition}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginTop: '20px', padding: '15px', background: '#0c211c', borderRadius: '8px' }}>
+        <h4 style={{ margin: '0 0 10px', fontSize: '13px', color: '#b8ed61' }}>İLK 11 ({best11.length}/11)</h4>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          {best11.map(player => (
+            <div key={player.id} style={{ fontSize: '11px', padding: '6px', background: '#071713', borderRadius: '4px' }}>
+              <span style={{ color: '#b8ed61' }}>{player.primaryPosition}</span> {player.name} <b>({player.baseOverall})</b>
+            </div>
+          ))}
+        </div>
+      </div>
       <button className="primary" onClick={p.saveLineup}>
         Dizilişi kaydet →
       </button>
