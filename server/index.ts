@@ -616,15 +616,19 @@ io.on('connection', (socket) => {
       const toTeam = room.teams.find(t => t.id === trade.to);
 
       if (fromTeam && toTeam) {
+        // from gives 'give', to gives 'want'
         // Remove players from respective rosters
         fromTeam.roster = fromTeam.roster.filter(p => p.id !== trade.give.id);
         toTeam.roster = toTeam.roster.filter(p => p.id !== trade.want.id);
 
-        // Add players to new rosters
+        // Add players to new rosters (swap)
         fromTeam.roster.push(trade.want);
         toTeam.roster.push(trade.give);
       }
     }
+
+    // Clear trade offers
+    room.tradeOffers = [];
 
     // Bot makes lineup and tactics decisions
     const botTeam = room.teams.find(t => t.id === 'bot');
@@ -722,6 +726,9 @@ io.on('connection', (socket) => {
 function processStealPhase(room: Room) {
   if (!room.stealChoices) return;
 
+  // Clear previous trade offers
+  room.tradeOffers = [];
+
   // Each team tries to steal from opponent
   for (const team of room.teams) {
     const choice = room.stealChoices[team.id];
@@ -743,25 +750,16 @@ function processStealPhase(room: Room) {
       continue;
     }
 
-    // Successful steal - swap players
+    // Successful steal - create trade offer (don't swap yet)
     const offerPlayer = team.roster.find(p => p.id === choice.offer);
     if (!offerPlayer) continue;
 
-    // Remove players from rosters
-    team.roster = team.roster.filter(p => p.id !== offerPlayer.id);
-    opponent.roster = opponent.roster.filter(p => p.id !== targetPlayer.id);
-
-    // Add players to new rosters
-    team.roster.push(targetPlayer);
-    opponent.roster.push(offerPlayer);
-
     // Generate trade offer for next phase
-    if (!room.tradeOffers) room.tradeOffers = [];
     room.tradeOffers.push({
       from: team.id,
       to: opponent.id,
-      give: targetPlayer,
-      want: offerPlayer
+      give: offerPlayer,
+      want: targetPlayer
     });
   }
 }
