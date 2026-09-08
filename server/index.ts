@@ -357,18 +357,19 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Check if we need to add a bot to make it even
+    // Fill room with bots up to maxPlayers count
     const currentPlayerCount = room.teams.length;
-    if (currentPlayerCount % 2 !== 0) {
-      // Odd number - add 1 bot
-      const botTeam = createTeam('bot-1', 'Bot Atlas');
-      botTeam.ready = true;
-      room.teams.push(botTeam);
-    } else if (currentPlayerCount < 2) {
-      // Less than 2 players - add bot
-      const botTeam = createTeam('bot-1', 'Bot Atlas');
-      botTeam.ready = true;
-      room.teams.push(botTeam);
+    const botsNeeded = room.maxPlayers - currentPlayerCount;
+
+    if (botsNeeded > 0) {
+      const botNames = ['Bot Atlas', 'Bot Olympos', 'Bot Sparta', 'Bot Nemesis', 'Bot Titan', 'Bot Kronos', 'Bot Zeus'];
+
+      for (let i = 0; i < botsNeeded; i++) {
+        const botName = botNames[i] || `Bot ${i + 1}`;
+        const botTeam = createTeam(`bot-${currentPlayerCount + i}`, botName);
+        botTeam.ready = true;
+        room.teams.push(botTeam);
+      }
     }
 
     room.phase = 'auction';
