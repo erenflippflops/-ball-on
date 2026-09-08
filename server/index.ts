@@ -419,6 +419,24 @@ io.on('connection', (socket) => {
       highestBidder: playerTeam.name
     });
     io.to(roomId).emit('room_updated', room);
+
+    // Check if all human players have decided (either bid or skipped)
+    const humanTeams = room.teams.filter(t => !t.id.startsWith('bot'));
+    const humanBidders = Object.keys(room.auctionState.currentBids).filter(teamId => !teamId.startsWith('bot'));
+    const humanSkippers = room.auctionState.skippedPlayers.filter(teamId => !teamId.startsWith('bot'));
+
+    const allHumansDecided = humanTeams.length === (humanBidders.length + humanSkippers.length);
+
+    // Only finalize immediately if there's exactly 1 bidder and others skipped
+    if (allHumansDecided && humanBidders.length === 1) {
+      // One bidder, others skipped - finalize immediately
+      const timer = auctionTimers.get(roomId);
+      if (timer) {
+        clearInterval(timer);
+        auctionTimers.delete(roomId);
+      }
+      finalizeAuction(roomId, io);
+    }
   });
 
   // Skip player - mark as skipped and check if all decided
