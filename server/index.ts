@@ -88,8 +88,30 @@ function finalizeAuction(roomId: string, io: Server) {
       });
     }
   } else {
-    // No bids - player skipped
-    io.to(roomId).emit('player_skipped', { player: currentPlayer });
+    // No bids - assign to random team for free
+    const eligibleTeams = room.teams.filter(t => {
+      if (t.roster.length >= 14) return false;
+      const positionCheck = canAddPlayer(t, currentPlayer);
+      return positionCheck.allowed;
+    });
+
+    if (eligibleTeams.length > 0) {
+      const randomTeam = eligibleTeams[Math.floor(Math.random() * eligibleTeams.length)];
+      randomTeam.roster.push(currentPlayer);
+
+      io.to(roomId).emit('player_acquired', {
+        player: currentPlayer,
+        amount: 0,
+        winner: randomTeam.name,
+        free: true
+      });
+      io.to(roomId).emit('message', {
+        text: `Hiç teklif verilmedi! ${currentPlayer.name} rastgele ${randomTeam.name} takımına ücretsiz gitti.`
+      });
+    } else {
+      // No eligible team - player skipped
+      io.to(roomId).emit('player_skipped', { player: currentPlayer });
+    }
   }
 
   // Move to next player

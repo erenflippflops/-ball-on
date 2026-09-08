@@ -76,7 +76,11 @@ function App() {
     });
 
     socketService.onPlayerAcquired((data) => {
-      setMessage(`${data.player.name} kadrona katıldı! (${data.amount} CR)`);
+      if (data.free) {
+        setMessage(`🎲 ${data.player.name} hiç teklif almadı! Rastgele ${data.winner} takımına ücretsiz gitti.`);
+      } else {
+        setMessage(`✅ ${data.winner} ${data.player.name}'i ${data.amount} CR'ye aldı!`);
+      }
     });
 
     socketService.onMatchResult((result) => {
