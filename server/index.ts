@@ -712,6 +712,9 @@ io.on('connection', (socket) => {
       }
     }
 
+    // Send success callback immediately
+    callback({ success: true });
+
     // Bots automatically respond to trade offers
     room.teams.forEach(team => {
       if (team.id.startsWith('bot-') && !room.tradeResponses?.has(team.id)) {
@@ -759,10 +762,10 @@ io.on('connection', (socket) => {
       room.phase = 'lineup';
       io.to(roomId).emit('phase_changed', { phase: 'lineup' });
       io.to(roomId).emit('room_updated', room);
+    } else {
+      // Send room update to show responses
+      io.to(roomId).emit('room_updated', room);
     }
-
-    callback({ success: true });
-    io.to(roomId).emit('room_updated', room);
   });
 
   // Save lineup

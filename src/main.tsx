@@ -295,7 +295,14 @@ function App() {
 
   const acceptTrade = async (accept: boolean) => {
     if (!roomId) return;
-    await socketService.tradeResponse(roomId, accept);
+    console.log('Accept trade called:', { accept, roomId });
+    const response = await socketService.tradeResponse(roomId, accept);
+    console.log('Trade response:', response);
+    if (response.success) {
+      showNotification(accept ? 'Takas kabul edildi!' : 'Takas reddedildi', 'success');
+    } else {
+      showNotification(response.error || 'Takas işlemi başarısız', 'error');
+    }
   };
 
   const saveLineup = async () => {
