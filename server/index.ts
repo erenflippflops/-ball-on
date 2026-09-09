@@ -611,22 +611,26 @@ io.on('connection', (socket) => {
     if (!room.stealChoices) room.stealChoices = {};
     room.stealChoices[socket.id] = { target, offer, protect };
 
-    // Bot also makes steal choice
-    const botTeam = room.teams.find(t => t.id === 'bot');
-    const playerTeam = room.teams.find(t => t.id === socket.id);
+    // All bots make steal choices
+    room.teams.forEach(team => {
+      if (team.id.startsWith('bot-') && !room.stealChoices![team.id]) {
+        const botAI = new BotAI(team);
 
-    if (botTeam && playerTeam && !room.stealChoices['bot']) {
-      const botAI = new BotAI(botTeam);
-      const targetPlayer = botAI.selectStealTarget(playerTeam.roster);
-      const offerPlayer = targetPlayer ? botAI.selectOfferPlayer(targetPlayer) : null;
-      const protectPlayer = botAI.selectProtectedPlayer();
+        // Pick a random opponent
+        const opponents = room.teams.filter(t => t.id !== team.id);
+        const randomOpponent = opponents[Math.floor(Math.random() * opponents.length)];
 
-      room.stealChoices['bot'] = {
-        target: targetPlayer?.id || '',
-        offer: offerPlayer?.id || '',
-        protect: protectPlayer?.id || ''
-      };
-    }
+        const targetPlayer = randomOpponent ? botAI.selectStealTarget(randomOpponent.roster) : null;
+        const offerPlayer = targetPlayer ? botAI.selectOfferPlayer(targetPlayer) : null;
+        const protectPlayer = botAI.selectProtectedPlayer();
+
+        room.stealChoices![team.id] = {
+          target: targetPlayer?.id || '',
+          offer: offerPlayer?.id || '',
+          protect: protectPlayer?.id || ''
+        };
+      }
+    });
 
     // Process steal if all players submitted
     const allSubmitted = room.teams.every(t => room.stealChoices?.[t.id]);
@@ -650,6 +654,12 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Track who has responded to trade offers
+    if (!room.tradeResponses) {
+      room.tradeResponses = new Set<string>();
+    }
+    room.tradeResponses.add(socket.id);
+
     // Process trade if accepted
     if (accept && room.tradeOffers && room.tradeOffers.length > 0) {
       const trade = room.tradeOffers[0];
@@ -668,21 +678,30 @@ io.on('connection', (socket) => {
       }
     }
 
-    // Clear trade offers
-    room.tradeOffers = [];
+    // Check if all players (human + bots) have responded
+    const allResponded = room.teams.every(t => room.tradeResponses?.has(t.id));
 
-    // Bot makes lineup and tactics decisions
-    const botTeam = room.teams.find(t => t.id === 'bot');
-    if (botTeam) {
-      const botAI = new BotAI(botTeam);
-      botTeam.formation = botAI.selectFormation();
-      botTeam.tactic = botAI.selectTactics();
-      botTeam.lineup = {}; // Placeholder - would need proper lineup assignment
+    if (allResponded) {
+      // Clear trade offers and responses
+      room.tradeOffers = [];
+      room.tradeResponses = new Set();
+
+      // All bots make lineup and tactics decisions
+      room.teams.forEach(team => {
+        if (team.id.startsWith('bot-')) {
+          const botAI = new BotAI(team);
+          team.formation = botAI.selectFormation();
+          team.tactic = botAI.selectTactics();
+          team.lineup = {}; // Placeholder - would need proper lineup assignment
+        }
+      });
+
+      room.phase = 'lineup';
+      io.to(roomId).emit('phase_changed', { phase: 'lineup' });
+      io.to(roomId).emit('room_updated', room);
     }
 
-    room.phase = 'lineup';
     callback({ success: true });
-    io.to(roomId).emit('phase_changed', { phase: 'lineup' });
     io.to(roomId).emit('room_updated', room);
   });
 

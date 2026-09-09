@@ -59,6 +59,7 @@ export interface Room {
   auctionPool: Player[];
   stealChoices?: Record<string, { target: string; offer: string; protect: string }>;
   tradeOffers?: Array<{ from: string; to: string; give: Player; want: Player }>;
+  tradeResponses?: Set<string>; // Track who has responded to trade offers
   matchResult?: MatchResult;
   marketTrend?: 'boom' | 'crash' | 'stable';
   upcomingStars?: string[]; // Player IDs that are leaked as "coming soon"
