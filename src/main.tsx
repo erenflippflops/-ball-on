@@ -5,6 +5,7 @@ import './style-joker.css';
 import { socketService } from './socketService';
 import type { Player, Team, Room, Phase } from './types';
 import { translations, type Language } from './translations';
+import { HalftimeComponent } from './HalftimeComponent';
 
 function App() {
   const [phase, setPhase] = useState<Phase>('lobby');
@@ -35,6 +36,10 @@ function App() {
   const [stealTarget, setStealTarget] = useState('');
   const [stealOffer, setStealOffer] = useState('');
   const [stealProtect, setStealProtect] = useState('');
+
+  // Halftime transfer window state
+  const [halftimeTimer, setHalftimeTimer] = useState(90);
+  const [halftimeOffers, setHalftimeOffers] = useState<Array<{ id: number; from: string; fromTeam: string; give: Player; want: Player }>>([]);
 
   const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
@@ -302,6 +307,33 @@ function App() {
     await socketService.simulateMatch(roomId);
   };
 
+  // Halftime handlers
+  const handleSellPlayer = async (playerId: string, price: number) => {
+    if (!roomId) return;
+    // TODO: Implement sell player socket event
+    showNotification(t.playerSold, 'success');
+  };
+
+  const handleMakeOffer = async (targetTeamId: string, givePlayerId: string, wantPlayerId: string) => {
+    if (!roomId) return;
+    // TODO: Implement halftime offer socket event
+    showNotification(t.offerSent, 'success');
+  };
+
+  const handleRespondOffer = async (offerId: number, accept: boolean) => {
+    if (!roomId) return;
+    // TODO: Implement halftime respond socket event
+    if (accept) {
+      showNotification(t.offerAccepted, 'success');
+    }
+  };
+
+  const handleFinishHalftime = async () => {
+    if (!roomId) return;
+    // TODO: Implement finish halftime socket event
+    showNotification(language === 'tr' ? 'İkinci yarıya geçiliyor...' : 'Proceeding to second half...', 'info');
+  };
+
   return (
     <div className="app">
       {/* Auction Result Modal */}
@@ -378,6 +410,7 @@ function App() {
             phase={phase}
             me={me}
             opponent={opponent}
+            teams={teams}
             avg={avg}
             current={current}
             bid={bid}
@@ -410,6 +443,12 @@ function App() {
             highestBid={highestBid}
             highestBidder={highestBidder}
             language={language}
+            halftimeTimer={halftimeTimer}
+            halftimeOffers={halftimeOffers}
+            onSellPlayer={handleSellPlayer}
+            onMakeOffer={handleMakeOffer}
+            onRespondOffer={handleRespondOffer}
+            onFinishHalftime={handleFinishHalftime}
           />
         )}
       </main>
@@ -624,6 +663,20 @@ function Game(p: any) {
         {p.phase === 'lineup' && <Lineup {...p} />}
         {p.phase === 'tactics' && <Tactics {...p} />}
         {p.phase === 'match' && <Match />}
+        {p.phase === 'halftime' && (
+          <HalftimeComponent
+            me={p.me}
+            opponents={p.teams.filter((t: Team) => t.id !== p.me.id)}
+            language={p.language}
+            halftimeTimer={p.halftimeTimer}
+            onSellPlayer={p.onSellPlayer}
+            onMakeOffer={p.onMakeOffer}
+            onRespondOffer={p.onRespondOffer}
+            onFinish={p.onFinishHalftime}
+            incomingOffers={p.halftimeOffers}
+          />
+        )}
+        {p.phase === 'second_half' && <Match />}
         {p.phase === 'result' && <Result result={p.matchResult} />}
       </div>
       <aside className="rightbar">

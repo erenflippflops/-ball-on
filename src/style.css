@@ -1519,3 +1519,93 @@ button:active::after {
   height: 300px;
   transition: 0s;
 }
+
+/* ============================================
+   HALFTIME TRANSFER WINDOW
+   ============================================ */
+
+.halftime-window {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.halftime-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-6);
+  border-bottom: 2px solid rgba(132, 204, 22, 0.2);
+}
+
+.halftime-header .kicker {
+  color: var(--color-accent);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.halftime-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 var(--space-2);
+  color: var(--color-foreground);
+  font-family: var(--font-heading);
+}
+
+.halftime-header p {
+  color: var(--color-muted-foreground);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.halftime-timer-box {
+  text-align: center;
+  padding: var(--space-4);
+  background: rgba(132, 204, 22, 0.1);
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-accent);
+  min-width: 150px;
+}
+
+.halftime-timer-box small {
+  display: block;
+  color: var(--color-muted-foreground);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-2);
+}
+
+.halftime-timer-value {
+  font-size: 3rem;
+  font-family: var(--font-heading);
+  color: var(--color-accent);
+  line-height: 1;
+}
+
+.halftime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
+}
+
+.halftime-section {
+  background: rgba(10, 26, 28, 0.4);
+  border: 1px solid rgba(132, 204, 22, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.halftime-section h3 {
+  font-size: 1.25rem;
+  margin: 0 0 var(--space-4);
+  color: var(--color-accent);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
