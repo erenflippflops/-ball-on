@@ -356,62 +356,106 @@ function App() {
   };
 
   const adminChangePhase = async (newPhase: Phase) => {
-    if (!isAdmin || !roomId) return;
+    if (!isAdmin || !roomId) {
+      console.log('Admin change phase failed:', { isAdmin, roomId });
+      return;
+    }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    console.log('Changing phase to:', newPhase, 'for room:', roomId);
     try {
-      await fetch(`${API_URL}/admin/room/${roomId}/phase`, {
+      const response = await fetch(`${API_URL}/admin/room/${roomId}/phase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase: newPhase })
       });
-      showNotification(`Phase changed to ${newPhase}`, 'success');
+      const data = await response.json();
+      console.log('Phase change response:', data);
+      if (data.success) {
+        showNotification(`Phase changed to ${newPhase}`, 'success');
+      } else {
+        showNotification(`Failed: ${data.error}`, 'error');
+      }
     } catch (err) {
       console.error('Failed to change phase:', err);
+      showNotification('Network error', 'error');
     }
   };
 
   const adminAddBudget = async (teamId: string, amount: number) => {
-    if (!isAdmin || !roomId) return;
+    if (!isAdmin || !roomId) {
+      console.log('Admin add budget failed:', { isAdmin, roomId });
+      return;
+    }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    console.log('Adding budget:', amount, 'to team:', teamId, 'in room:', roomId);
     try {
-      await fetch(`${API_URL}/admin/room/${roomId}/budget`, {
+      const response = await fetch(`${API_URL}/admin/room/${roomId}/budget`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId, amount })
       });
-      showNotification(`Budget ${amount > 0 ? 'added' : 'removed'}`, 'success');
+      const data = await response.json();
+      console.log('Budget change response:', data);
+      if (data.success) {
+        showNotification(`Budget ${amount > 0 ? 'added' : 'removed'}`, 'success');
+      } else {
+        showNotification(`Failed: ${data.error}`, 'error');
+      }
     } catch (err) {
       console.error('Failed to change budget:', err);
+      showNotification('Network error', 'error');
     }
   };
 
   const adminFillRoster = async (teamId: string) => {
-    if (!isAdmin || !roomId) return;
+    if (!isAdmin || !roomId) {
+      console.log('Admin fill roster failed:', { isAdmin, roomId });
+      return;
+    }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    console.log('Filling roster for team:', teamId, 'in room:', roomId);
     try {
-      await fetch(`${API_URL}/admin/room/${roomId}/fill-roster`, {
+      const response = await fetch(`${API_URL}/admin/room/${roomId}/fill-roster`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId })
       });
-      showNotification('Roster filled', 'success');
+      const data = await response.json();
+      console.log('Fill roster response:', data);
+      if (data.success) {
+        showNotification('Roster filled', 'success');
+      } else {
+        showNotification(`Failed: ${data.error}`, 'error');
+      }
     } catch (err) {
       console.error('Failed to fill roster:', err);
+      showNotification('Network error', 'error');
     }
   };
 
   const adminRemovePlayer = async (teamId: string, playerId: string) => {
-    if (!isAdmin || !roomId) return;
+    if (!isAdmin || !roomId) {
+      console.log('Admin remove player failed:', { isAdmin, roomId });
+      return;
+    }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    console.log('Removing player:', playerId, 'from team:', teamId, 'in room:', roomId);
     try {
-      await fetch(`${API_URL}/admin/room/${roomId}/remove-player`, {
+      const response = await fetch(`${API_URL}/admin/room/${roomId}/remove-player`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId, playerId })
       });
-      showNotification('Player removed', 'success');
+      const data = await response.json();
+      console.log('Remove player response:', data);
+      if (data.success) {
+        showNotification('Player removed', 'success');
+      } else {
+        showNotification(`Failed: ${data.error}`, 'error');
+      }
     } catch (err) {
       console.error('Failed to remove player:', err);
+      showNotification('Network error', 'error');
     }
   };
 

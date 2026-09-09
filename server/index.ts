@@ -532,6 +532,40 @@ io.on('connection', (socket) => {
     callback({ success: true });
     io.to(roomId).emit('player_skipped_bid', { teamName: playerTeam.name });
 
+    // Make all bots decide immediately (bid or skip)
+    room.teams.forEach(team => {
+      if (team.id.startsWith('bot-')) {
+        const alreadyBid = room.auctionState!.currentBids[team.id] !== undefined;
+        const alreadySkipped = room.auctionState!.skippedPlayers.includes(team.id);
+
+        if (!alreadyBid && !alreadySkipped) {
+          const currentPlayer = room.auctionPool[room.currentPlayerIndex];
+          const botAI = new BotAI(team);
+
+          if (botAI.shouldBid(currentPlayer)) {
+            const bidAmount = botAI.calculateBid(currentPlayer);
+            room.auctionState!.currentBids[team.id] = bidAmount;
+
+            if (bidAmount > room.auctionState!.highestBid) {
+              room.auctionState!.highestBid = bidAmount;
+              room.auctionState!.highestBidder = team.id;
+            }
+
+            io.to(roomId).emit('new_bid', {
+              teamId: team.id,
+              teamName: team.name,
+              amount: bidAmount,
+              highestBid: room.auctionState!.highestBid,
+              highestBidder: room.auctionState!.highestBidder
+            });
+          } else {
+            room.auctionState!.skippedPlayers.push(team.id);
+            io.to(roomId).emit('player_skipped_bid', { teamName: team.name });
+          }
+        }
+      }
+    });
+
     // Check if all players have decided (either bid or skipped)
     const allTeams = room.teams;
     const allBidders = Object.keys(room.auctionState.currentBids);
@@ -677,6 +711,32 @@ io.on('connection', (socket) => {
         toTeam.roster.push(trade.give);
       }
     }
+
+    // Bots automatically respond to trade offers
+    room.teams.forEach(team => {
+      if (team.id.startsWith('bot-') && !room.tradeResponses?.has(team.id)) {
+        room.tradeResponses?.add(team.id);
+
+        // Bot decides whether to accept trade
+        if (room.tradeOffers && room.tradeOffers.length > 0) {
+          const trade = room.tradeOffers[0];
+          if (trade.to === team.id) {
+            const botAI = new BotAI(team);
+            const shouldAccept = botAI.shouldAcceptTrade(trade.give, trade.want);
+
+            if (shouldAccept) {
+              const fromTeam = room.teams.find(t => t.id === trade.from);
+              if (fromTeam) {
+                fromTeam.roster = fromTeam.roster.filter(p => p.id !== trade.give.id);
+                team.roster = team.roster.filter(p => p.id !== trade.want.id);
+                fromTeam.roster.push(trade.want);
+                team.roster.push(trade.give);
+              }
+            }
+          }
+        }
+      }
+    });
 
     // Check if all players (human + bots) have responded
     const allResponded = room.teams.every(t => room.tradeResponses?.has(t.id));
