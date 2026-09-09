@@ -4,20 +4,25 @@ import './style.css';
 import { socketService } from './socketService';
 import type { Room, Phase } from './types';
 
+const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+
 function AdminPanel() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<string>('');
   const [room, setRoom] = useState<Room | null>(null);
+  const [error, setError] = useState<string>('');
 
   // Fetch rooms periodically
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await fetch('http://localhost:3001/admin/rooms');
+        const response = await fetch(`${API_URL}/admin/rooms`);
         const data = await response.json();
         setRooms(data.rooms || []);
+        setError('');
       } catch (err) {
         console.error('Failed to fetch rooms:', err);
+        setError('Failed to connect to server');
       }
     };
 
@@ -32,7 +37,7 @@ function AdminPanel() {
 
     const fetchRoom = async () => {
       try {
-        const response = await fetch(`http://localhost:3001/admin/room/${selectedRoom}`);
+        const response = await fetch(`${API_URL}/admin/room/${selectedRoom}`);
         const data = await response.json();
         setRoom(data.room);
       } catch (err) {
@@ -47,7 +52,7 @@ function AdminPanel() {
 
   const changePhase = async (phase: Phase) => {
     try {
-      await fetch(`http://localhost:3001/admin/room/${selectedRoom}/phase`, {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/phase`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase })
@@ -59,7 +64,7 @@ function AdminPanel() {
 
   const addBudget = async (teamId: string, amount: number) => {
     try {
-      await fetch(`http://localhost:3001/admin/room/${selectedRoom}/budget`, {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/budget`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId, amount })
@@ -71,7 +76,7 @@ function AdminPanel() {
 
   const skipToPlayer = async (index: number) => {
     try {
-      await fetch(`http://localhost:3001/admin/room/${selectedRoom}/skip`, {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/skip`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ index })
@@ -83,7 +88,7 @@ function AdminPanel() {
 
   const finishAuction = async () => {
     try {
-      await fetch(`http://localhost:3001/admin/room/${selectedRoom}/finish-auction`, {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/finish-auction`, {
         method: 'POST'
       });
     } catch (err) {
@@ -93,7 +98,7 @@ function AdminPanel() {
 
   const resetRoom = async () => {
     try {
-      await fetch(`http://localhost:3001/admin/room/${selectedRoom}/reset`, {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/reset`, {
         method: 'POST'
       });
     } catch (err) {
@@ -107,10 +112,21 @@ function AdminPanel() {
         🔧 BALL ON! Admin Panel
       </h1>
 
+      {error && (
+        <div style={{ padding: '15px', background: 'rgba(220, 38, 38, 0.2)', border: '1px solid rgba(220, 38, 38, 0.5)', borderRadius: '8px', marginBottom: '20px', color: '#DC2626' }}>
+          {error} - API URL: {API_URL}
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '30px' }}>
         {/* Rooms List */}
         <div>
           <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Active Rooms ({rooms.length})</h2>
+          {rooms.length === 0 && !error && (
+            <div style={{ padding: '20px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(132, 204, 22, 0.3)', borderRadius: '8px', textAlign: 'center', opacity: 0.6 }}>
+              No active rooms
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {rooms.map(r => (
               <button
