@@ -575,7 +575,11 @@ function App() {
             <h3 style={{ margin: '0 0 5px', color: '#84cc16', fontSize: '1.2rem', fontFamily: 'var(--font-heading)' }}>
               🔧 ADMIN PANEL
             </h3>
-            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Room: {roomId}</p>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>
+              Room: {roomId || '❌ NO ROOM'}<br/>
+              Phase: {phase}<br/>
+              Socket: {socketService.getSocketId() ? '✅' : '❌'}
+            </p>
           </div>
 
           {/* Phase Control */}
