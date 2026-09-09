@@ -24,7 +24,7 @@ function App() {
   const [marketTrend, setMarketTrend] = useState<'boom' | 'crash' | 'stable'>('stable');
   const [gossipStars, setGossipStars] = useState<string[]>([]);
   const [playerCount, setPlayerCount] = useState(1);
-  const [auctionTimer, setAuctionTimer] = useState(30);
+  const [auctionTimer, setAuctionTimer] = useState(14);
   const [highestBid, setHighestBid] = useState(0);
   const [highestBidder, setHighestBidder] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(2);
@@ -79,7 +79,7 @@ function App() {
       setPhase(data.phase as Phase);
       if (data.currentPlayer) {
         setCurrent(data.currentPlayer);
-        setAuctionTimer(30);
+        setAuctionTimer(14);
         setHighestBid(0);
         setHighestBidder('');
         setBid(1);
@@ -88,7 +88,7 @@ function App() {
 
     socketService.onNextPlayer((data) => {
       setCurrent(data.player);
-      setAuctionTimer(30);
+      setAuctionTimer(14);
       setHighestBid(0);
       setHighestBidder('');
       setBid(1);
@@ -363,8 +363,13 @@ function App() {
   };
 
   const adminChangePhase = async (newPhase: Phase) => {
-    if (!isAdmin || !roomId) {
-      console.log('Admin change phase failed:', { isAdmin, roomId });
+    if (!isAdmin) {
+      showNotification('Admin authentication required', 'error');
+      return;
+    }
+    if (!roomId) {
+      showNotification('No active room. Create or join a room first.', 'error');
+      console.log('Admin change phase failed - no roomId:', { isAdmin, roomId, room });
       return;
     }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -375,6 +380,9 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phase: newPhase })
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       console.log('Phase change response:', data);
       if (data.success) {
@@ -384,13 +392,17 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to change phase:', err);
-      showNotification('Network error', 'error');
+      showNotification(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
     }
   };
 
   const adminAddBudget = async (teamId: string, amount: number) => {
-    if (!isAdmin || !roomId) {
-      console.log('Admin add budget failed:', { isAdmin, roomId });
+    if (!isAdmin) {
+      showNotification('Admin authentication required', 'error');
+      return;
+    }
+    if (!roomId) {
+      showNotification('No active room. Create or join a room first.', 'error');
       return;
     }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -401,6 +413,9 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId, amount })
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       console.log('Budget change response:', data);
       if (data.success) {
@@ -410,13 +425,17 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to change budget:', err);
-      showNotification('Network error', 'error');
+      showNotification(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
     }
   };
 
   const adminFillRoster = async (teamId: string) => {
-    if (!isAdmin || !roomId) {
-      console.log('Admin fill roster failed:', { isAdmin, roomId });
+    if (!isAdmin) {
+      showNotification('Admin authentication required', 'error');
+      return;
+    }
+    if (!roomId) {
+      showNotification('No active room. Create or join a room first.', 'error');
       return;
     }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -427,6 +446,9 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId })
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       console.log('Fill roster response:', data);
       if (data.success) {
@@ -436,13 +458,17 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to fill roster:', err);
-      showNotification('Network error', 'error');
+      showNotification(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
     }
   };
 
   const adminRemovePlayer = async (teamId: string, playerId: string) => {
-    if (!isAdmin || !roomId) {
-      console.log('Admin remove player failed:', { isAdmin, roomId });
+    if (!isAdmin) {
+      showNotification('Admin authentication required', 'error');
+      return;
+    }
+    if (!roomId) {
+      showNotification('No active room. Create or join a room first.', 'error');
       return;
     }
     const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
@@ -453,6 +479,9 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teamId, playerId })
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       console.log('Remove player response:', data);
       if (data.success) {
@@ -462,7 +491,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to remove player:', err);
-      showNotification('Network error', 'error');
+      showNotification(`Network error: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
     }
   };
 

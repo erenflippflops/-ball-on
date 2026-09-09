@@ -50,7 +50,7 @@ function startAuctionTimer(roomId: string, io: Server) {
     }
 
     const elapsed = Math.floor((Date.now() - room.auctionState.timerStarted) / 1000);
-    room.auctionState.timeLeft = Math.max(0, 30 - elapsed);
+    room.auctionState.timeLeft = Math.max(0, 14 - elapsed);
 
     // Emit timer update
     io.to(roomId).emit('auction_timer', { timeLeft: room.auctionState.timeLeft });
@@ -179,7 +179,7 @@ function finalizeAuction(roomId: string, io: Server) {
         currentBids: {},
         highestBidder: null,
         highestBid: 0,
-        timeLeft: 30,
+        timeLeft: 14,
         timerStarted: Date.now(),
         skippedPlayers: []
       };
@@ -380,7 +380,7 @@ io.on('connection', (socket) => {
       currentBids: {},
       highestBidder: null,
       highestBid: 0,
-      timeLeft: 30,
+      timeLeft: 14,
       timerStarted: Date.now(),
       skippedPlayers: []
     };
@@ -466,11 +466,11 @@ io.on('connection', (socket) => {
 
     // Time extension: if less than 5 seconds left, add 3 seconds
     const elapsed = Math.floor((Date.now() - room.auctionState.timerStarted) / 1000);
-    const timeLeft = Math.max(0, 30 - elapsed);
+    const timeLeft = Math.max(0, 14 - elapsed);
 
     if (timeLeft < 5) {
       // Extend timer by 3 seconds
-      room.auctionState.timerStarted = Date.now() - ((30 - timeLeft - 3) * 1000);
+      room.auctionState.timerStarted = Date.now() - ((14 - timeLeft - 3) * 1000);
       io.to(roomId).emit('time_extended', {
         message: `⏱️ Son saniye teklifi! +3 saniye eklendi`,
         newTimeLeft: timeLeft + 3
@@ -880,7 +880,7 @@ app.post('/admin/room/:roomId/phase', (req, res) => {
       currentBids: {},
       highestBidder: null,
       highestBid: 0,
-      timeLeft: 30,
+      timeLeft: 14,
       timerStarted: Date.now(),
       skippedPlayers: []
     };
