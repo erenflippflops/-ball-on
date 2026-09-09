@@ -41,6 +41,13 @@ function App() {
   const [halftimeTimer, setHalftimeTimer] = useState(90);
   const [halftimeOffers, setHalftimeOffers] = useState<Array<{ id: number; from: string; fromTeam: string; give: Player; want: Player }>>([]);
 
+  // Admin mode state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
   const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
@@ -334,8 +341,244 @@ function App() {
     showNotification(language === 'tr' ? 'İkinci yarıya geçiliyor...' : 'Proceeding to second half...', 'info');
   };
 
+  // Admin functions
+  const handleAdminLogin = () => {
+    if (adminUsername === 'amo06' && adminPassword === 'tugba06') {
+      setIsAdmin(true);
+      setShowAdminLogin(false);
+      setAdminUsername('');
+      setAdminPassword('');
+      showNotification('Admin mode activated! 🔧', 'success');
+    } else {
+      showNotification('Invalid credentials', 'error');
+      setAdminPassword('');
+    }
+  };
+
+  const adminChangePhase = async (newPhase: Phase) => {
+    if (!isAdmin || !roomId) return;
+    const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    try {
+      await fetch(`${API_URL}/admin/room/${roomId}/phase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase: newPhase })
+      });
+      showNotification(`Phase changed to ${newPhase}`, 'success');
+    } catch (err) {
+      console.error('Failed to change phase:', err);
+    }
+  };
+
+  const adminAddBudget = async (teamId: string, amount: number) => {
+    if (!isAdmin || !roomId) return;
+    const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    try {
+      await fetch(`${API_URL}/admin/room/${roomId}/budget`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, amount })
+      });
+      showNotification(`Budget ${amount > 0 ? 'added' : 'removed'}`, 'success');
+    } catch (err) {
+      console.error('Failed to change budget:', err);
+    }
+  };
+
+  const adminFillRoster = async (teamId: string) => {
+    if (!isAdmin || !roomId) return;
+    const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    try {
+      await fetch(`${API_URL}/admin/room/${roomId}/fill-roster`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId })
+      });
+      showNotification('Roster filled', 'success');
+    } catch (err) {
+      console.error('Failed to fill roster:', err);
+    }
+  };
+
+  const adminRemovePlayer = async (teamId: string, playerId: string) => {
+    if (!isAdmin || !roomId) return;
+    const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    try {
+      await fetch(`${API_URL}/admin/room/${roomId}/remove-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, playerId })
+      });
+      showNotification('Player removed', 'success');
+    } catch (err) {
+      console.error('Failed to remove player:', err);
+    }
+  };
+
   return (
     <div className="app">
+      {/* Admin Login Modal */}
+      {showAdminLogin && (
+        <div className="auction-result-modal" onClick={() => setShowAdminLogin(false)}>
+          <div className="auction-result-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="auction-result-header">
+              <p className="kicker">ADMIN LOGIN</p>
+              <h2>🔧 Admin Access</h2>
+            </div>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '5px' }}>Username</label>
+              <input
+                type="text"
+                value={adminUsername}
+                onChange={(e) => setAdminUsername(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(10, 26, 28, 0.6)',
+                  border: '1px solid rgba(132, 204, 22, 0.3)',
+                  borderRadius: '8px',
+                  color: '#F1F5F9',
+                  fontSize: '14px'
+                }}
+                placeholder="Enter username"
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '5px' }}>Password</label>
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminLogin()}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: 'rgba(10, 26, 28, 0.6)',
+                  border: '1px solid rgba(132, 204, 22, 0.3)',
+                  borderRadius: '8px',
+                  color: '#F1F5F9',
+                  fontSize: '14px'
+                }}
+                placeholder="Enter password"
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button className="primary" onClick={handleAdminLogin} style={{ flex: 1 }}>
+                Login
+              </button>
+              <button className="ghost" onClick={() => setShowAdminLogin(false)} style={{ flex: 1 }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Panel Overlay */}
+      {isAdmin && showAdminPanel && phase !== 'lobby' && (
+        <div style={{
+          position: 'fixed',
+          top: '76px',
+          right: '20px',
+          width: '350px',
+          maxHeight: 'calc(100vh - 100px)',
+          overflowY: 'auto',
+          background: 'rgba(2, 6, 23, 0.98)',
+          border: '2px solid #84cc16',
+          borderRadius: '12px',
+          padding: '20px',
+          zIndex: 9999,
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.9)'
+        }}>
+          <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(132, 204, 22, 0.2)' }}>
+            <h3 style={{ margin: '0 0 5px', color: '#84cc16', fontSize: '1.2rem', fontFamily: 'var(--font-heading)' }}>
+              🔧 ADMIN PANEL
+            </h3>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: '#94a3b8' }}>Room: {roomId}</p>
+          </div>
+
+          {/* Phase Control */}
+          <div style={{ marginBottom: '20px' }}>
+            <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#F1F5F9' }}>⚡ Phase Control</h4>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+              {(['auction', 'steal', 'trade', 'lineup', 'tactics', 'match', 'halftime', 'second_half', 'result'] as Phase[]).map(p => (
+                <button
+                  key={p}
+                  onClick={() => adminChangePhase(p)}
+                  disabled={phase === p}
+                  style={{
+                    padding: '8px',
+                    background: phase === p ? '#84cc16' : 'rgba(132, 204, 22, 0.1)',
+                    border: '1px solid rgba(132, 204, 22, 0.3)',
+                    borderRadius: '6px',
+                    color: phase === p ? '#0F172A' : '#F1F5F9',
+                    cursor: phase === p ? 'not-allowed' : 'pointer',
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Teams Control */}
+          <div>
+            <h4 style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#F1F5F9' }}>👥 Teams</h4>
+            {teams.map(team => (
+              <div key={team.id} style={{ marginBottom: '15px', padding: '12px', background: 'rgba(15, 23, 42, 0.8)', borderRadius: '8px', border: '1px solid rgba(132, 204, 22, 0.2)' }}>
+                <div style={{ fontWeight: 700, marginBottom: '8px', color: '#84cc16', fontSize: '0.9rem' }}>{team.name}</div>
+                <div style={{ fontSize: '0.75rem', marginBottom: '10px', color: '#94a3b8' }}>
+                  Budget: <strong>{team.budget} CR</strong> | Roster: <strong>{team.roster.length}/14</strong>
+                </div>
+                <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
+                  <button
+                    onClick={() => adminAddBudget(team.id, 20)}
+                    style={{ flex: 1, padding: '6px', background: 'rgba(132, 204, 22, 0.2)', border: '1px solid rgba(132, 204, 22, 0.4)', borderRadius: '4px', color: '#84cc16', cursor: 'pointer', fontSize: '0.7rem' }}
+                  >
+                    +20 CR
+                  </button>
+                  <button
+                    onClick={() => adminAddBudget(team.id, -20)}
+                    style={{ flex: 1, padding: '6px', background: 'rgba(220, 38, 38, 0.2)', border: '1px solid rgba(220, 38, 38, 0.4)', borderRadius: '4px', color: '#DC2626', cursor: 'pointer', fontSize: '0.7rem' }}
+                  >
+                    -20 CR
+                  </button>
+                </div>
+                <button
+                  onClick={() => adminFillRoster(team.id)}
+                  disabled={team.roster.length >= 14}
+                  style={{ width: '100%', padding: '8px', background: team.roster.length >= 14 ? 'rgba(100, 100, 100, 0.2)' : 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '4px', color: team.roster.length >= 14 ? '#666' : '#3b82f6', cursor: team.roster.length >= 14 ? 'not-allowed' : 'pointer', fontSize: '0.75rem', fontWeight: 600, marginBottom: '8px' }}
+                >
+                  Fill Roster ({14 - team.roster.length} more)
+                </button>
+                {team.roster.length > 0 && (
+                  <details>
+                    <summary style={{ cursor: 'pointer', fontSize: '0.75rem', color: '#94a3b8' }}>Players ({team.roster.length})</summary>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', marginTop: '8px' }}>
+                      {team.roster.map(player => (
+                        <div key={player.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 6px', background: 'rgba(7, 23, 19, 0.6)', borderRadius: '4px', marginBottom: '4px', fontSize: '0.7rem' }}>
+                          <span>{player.name} ({player.primaryPosition} - {player.baseOverall})</span>
+                          <button
+                            onClick={() => adminRemovePlayer(team.id, player.id)}
+                            style={{ padding: '2px 6px', background: 'rgba(220, 38, 38, 0.3)', border: 'none', borderRadius: '3px', color: '#DC2626', cursor: 'pointer', fontSize: '0.65rem' }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Auction Result Modal */}
       {auctionResult && (
         <AuctionResultModal
@@ -386,6 +629,39 @@ function App() {
             EN
           </button>
         </div>
+        {!isAdmin ? (
+          <button
+            onClick={() => setShowAdminLogin(true)}
+            style={{
+              padding: '8px 12px',
+              background: 'rgba(220, 38, 38, 0.1)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
+              borderRadius: '6px',
+              color: '#DC2626',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 700
+            }}
+          >
+            🔧 ADMIN
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAdminPanel(!showAdminPanel)}
+            style={{
+              padding: '8px 12px',
+              background: 'rgba(132, 204, 22, 0.2)',
+              border: '1px solid rgba(132, 204, 22, 0.5)',
+              borderRadius: '6px',
+              color: '#84cc16',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 700
+            }}
+          >
+            🔧 {showAdminPanel ? 'HIDE' : 'SHOW'}
+          </button>
+        )}
         <div className="room">{room && <>{t.room} <b>{room}</b></>}</div>
       </header>
       <main>
