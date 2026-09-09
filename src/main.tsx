@@ -403,6 +403,7 @@ function App() {
             auctionTimer={auctionTimer}
             highestBid={highestBid}
             highestBidder={highestBidder}
+            language={language}
           />
         )}
       </main>
