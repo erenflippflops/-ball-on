@@ -715,9 +715,19 @@ function Game(p: any) {
 
 function Auction(p: any) {
   const x = p.current as Player;
-  if (!x) return null;
-
   const t = translations[p.language as Language];
+
+  if (!x) {
+    return (
+      <div className="auction" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <div style={{ textAlign: 'center', color: '#9ab3a8' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⏳</div>
+          <p>{p.language === 'tr' ? 'Oyuncu yükleniyor...' : 'Loading player...'}</p>
+        </div>
+      </div>
+    );
+  }
+
   const maxBid = Math.max(1, p.me.budget - (14 - p.me.roster.length));
 
   return (
