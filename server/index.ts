@@ -907,6 +907,73 @@ app.post('/admin/room/:roomId/reset', (req, res) => {
   res.json({ success: true });
 });
 
+app.post('/admin/room/:roomId/add-player', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { teamId, playerId } = req.body;
+  const team = room.teams.find(t => t.id === teamId);
+  if (!team) {
+    return res.status(404).json({ error: 'Team not found' });
+  }
+
+  // Find player from auction pool
+  const player = room.auctionPool.find(p => p.id === playerId);
+  if (!player) {
+    return res.status(404).json({ error: 'Player not found' });
+  }
+
+  // Add player to roster if not already there
+  if (!team.roster.find(p => p.id === playerId)) {
+    team.roster.push(player);
+  }
+
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/remove-player', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { teamId, playerId } = req.body;
+  const team = room.teams.find(t => t.id === teamId);
+  if (!team) {
+    return res.status(404).json({ error: 'Team not found' });
+  }
+
+  team.roster = team.roster.filter(p => p.id !== playerId);
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/fill-roster', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { teamId, count } = req.body;
+  const team = room.teams.find(t => t.id === teamId);
+  if (!team) {
+    return res.status(404).json({ error: 'Team not found' });
+  }
+
+  const playersToAdd = count || (14 - team.roster.length);
+  const availablePlayers = room.auctionPool.filter(p => !team.roster.find(r => r.id === p.id));
+
+  for (let i = 0; i < playersToAdd && i < availablePlayers.length; i++) {
+    team.roster.push(availablePlayers[i]);
+  }
+
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true, added: Math.min(playersToAdd, availablePlayers.length) });
+});
+
 // Process steal phase logic
 function processStealPhase(room: Room) {
   if (!room.stealChoices) return;

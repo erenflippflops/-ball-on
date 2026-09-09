@@ -106,6 +106,42 @@ function AdminPanel() {
     }
   };
 
+  const addPlayer = async (teamId: string, playerId: string) => {
+    try {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/add-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, playerId })
+      });
+    } catch (err) {
+      console.error('Failed to add player:', err);
+    }
+  };
+
+  const removePlayer = async (teamId: string, playerId: string) => {
+    try {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/remove-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, playerId })
+      });
+    } catch (err) {
+      console.error('Failed to remove player:', err);
+    }
+  };
+
+  const fillRoster = async (teamId: string, count?: number) => {
+    try {
+      await fetch(`${API_URL}/admin/room/${selectedRoom}/fill-roster`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId, count })
+      });
+    } catch (err) {
+      console.error('Failed to fill roster:', err);
+    }
+  };
+
   return (
     <div style={{ padding: '40px', background: '#020617', minHeight: '100vh', color: '#F1F5F9' }}>
       <h1 style={{ fontFamily: 'var(--font-heading)', color: '#84cc16', marginBottom: '30px' }}>
@@ -169,7 +205,7 @@ function AdminPanel() {
               <div style={{ marginBottom: '30px' }}>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>⚡ Phase Control</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                  {(['lobby', 'auction', 'steal', 'trade', 'lineup', 'tactics', 'match', 'result'] as Phase[]).map(phase => (
+                  {(['lobby', 'auction', 'steal', 'trade', 'lineup', 'tactics', 'match', 'halftime', 'second_half', 'result'] as Phase[]).map(phase => (
                     <button
                       key={phase}
                       onClick={() => changePhase(phase)}
@@ -189,6 +225,9 @@ function AdminPanel() {
                       {phase}
                     </button>
                   ))}
+                </div>
+                <div style={{ marginTop: '15px', padding: '12px', background: 'rgba(132, 204, 22, 0.05)', borderRadius: '8px', fontSize: '0.85rem', opacity: 0.8 }}>
+                  💡 <strong>Tip:</strong> Herhangi bir phase'e atlayabilirsiniz. Test için trade'i denemek istiyorsanız direkt "trade" butonuna tıklayın.
                 </div>
               </div>
 
@@ -237,7 +276,7 @@ function AdminPanel() {
 
               {/* Teams */}
               <div style={{ marginBottom: '30px' }}>
-                <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>👥 Teams</h3>
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>👥 Teams & Rosters</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
                   {room.teams.map(team => (
                     <div
@@ -254,11 +293,13 @@ function AdminPanel() {
                       </div>
                       <div style={{ fontSize: '0.85rem', marginBottom: '10px' }}>
                         Budget: <strong>{team.budget} CR</strong> |
-                        Roster: {team.roster.length} |
+                        Roster: <strong>{team.roster.length}/14</strong> |
                         Scouts: {team.scouts} |
                         Buff: {team.buff}
                       </div>
-                      <div style={{ display: 'flex', gap: '5px' }}>
+
+                      {/* Budget Controls */}
+                      <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
                         <button
                           onClick={() => addBudget(team.id, 10)}
                           style={{
@@ -288,7 +329,7 @@ function AdminPanel() {
                           +50 CR
                         </button>
                         <button
-                          onClick={() => addBudget(team.id, -team.budget)}
+                          onClick={() => addBudget(team.id, -team.budget + 100)}
                           style={{
                             padding: '6px 12px',
                             background: 'rgba(220, 38, 38, 0.2)',
@@ -299,9 +340,73 @@ function AdminPanel() {
                             fontSize: '0.75rem'
                           }}
                         >
-                          Reset
+                          Reset 100
                         </button>
                       </div>
+
+                      {/* Roster Controls */}
+                      <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+                        <button
+                          onClick={() => fillRoster(team.id, 14 - team.roster.length)}
+                          style={{
+                            flex: 1,
+                            padding: '8px',
+                            background: 'rgba(59, 130, 246, 0.2)',
+                            border: '1px solid rgba(59, 130, 246, 0.4)',
+                            borderRadius: '6px',
+                            color: '#3b82f6',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: 600
+                          }}
+                        >
+                          Fill Roster ({14 - team.roster.length} more)
+                        </button>
+                      </div>
+
+                      {/* Roster List */}
+                      {team.roster.length > 0 && (
+                        <details style={{ marginTop: '10px' }}>
+                          <summary style={{ cursor: 'pointer', fontSize: '0.8rem', color: '#94a3b8', marginBottom: '5px' }}>
+                            Show Roster ({team.roster.length})
+                          </summary>
+                          <div style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '8px' }}>
+                            {team.roster.map(player => (
+                              <div
+                                key={player.id}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '6px 8px',
+                                  background: 'rgba(7, 23, 19, 0.6)',
+                                  borderRadius: '4px',
+                                  marginBottom: '4px',
+                                  fontSize: '0.75rem'
+                                }}
+                              >
+                                <span>
+                                  {player.name} <span style={{ color: '#84cc16' }}>({player.primaryPosition} - {player.baseOverall})</span>
+                                </span>
+                                <button
+                                  onClick={() => removePlayer(team.id, player.id)}
+                                  style={{
+                                    padding: '2px 6px',
+                                    background: 'rgba(220, 38, 38, 0.3)',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    color: '#DC2626',
+                                    cursor: 'pointer',
+                                    fontSize: '0.7rem'
+                                  }}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
                     </div>
                   ))}
                 </div>
