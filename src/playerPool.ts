@@ -1,5 +1,31 @@
 import type { Player, Joker } from './types';
 
+// Calculate market value based on player attributes
+function calculateMarketValue(player: Omit<Player, 'marketValue' | 'joker'>): number {
+  const overall = player.baseOverall;
+  const tier = player.marketTier;
+
+  // Base value from overall rating
+  let baseValue = Math.round((overall - 60) * 1.2);
+
+  // Tier multiplier
+  const tierMultipliers = {
+    star: 1.5,
+    high: 1.2,
+    medium: 1.0,
+    low: 0.8
+  };
+
+  baseValue = Math.round(baseValue * tierMultipliers[tier]);
+
+  // Age factor (younger = slightly more valuable)
+  if (player.age < 25) baseValue += 2;
+  if (player.age > 32) baseValue -= 2;
+
+  // Ensure minimum and maximum
+  return Math.max(3, Math.min(baseValue, 50));
+}
+
 // Joker generation logic
 function generateJoker(): Joker | undefined {
   // 20% chance for a player to have a joker
@@ -3582,9 +3608,10 @@ export function getShuffledPool(count: number = 100): Player[] {
   const shuffled = [...playerPool].sort(() => Math.random() - 0.5);
   const selected = shuffled.slice(0, count);
 
-  // Assign jokers to selected players
+  // Assign jokers and calculate market values for selected players
   return selected.map(player => ({
     ...player,
+    marketValue: calculateMarketValue(player),
     joker: generateJoker()
   }));
 }

@@ -106,7 +106,29 @@ export const translations = {
     lineupPhase: 'İlk 11 ve diziliş',
     tacticsPhase: 'Taktik planı',
     matchPhase: 'Maç',
-    resultPhase: 'Maç Raporu'
+    halftimePhase: 'Devre Arası',
+    resultPhase: 'Maç Raporu',
+
+    // Halftime Transfer Window
+    halftimeKicker: 'DEVRE ARASI TRANSFER PENCERESI',
+    halftimeTitle: 'Transfer Zamanı',
+    halftimeSubtitle: 'Oyuncu sat, takas teklifi gönder veya al. Süre dolmadan takımını güçlendir!',
+    halftimeTimer: 'Kalan Süre',
+    sellPlayer: 'Oyuncu Sat',
+    sellPrice: 'Satış Fiyatı',
+    sellButton: 'Satışa Çıkar',
+    makeOffer: 'Takas Teklifi Yap',
+    selectPlayer: 'Oyuncu Seç',
+    wantPlayer: 'İstediğin Oyuncu',
+    sendOffer: 'Teklif Gönder',
+    incomingOffers: 'Gelen Teklifler',
+    noOffers: 'Henüz teklif yok',
+    accept: 'Kabul Et',
+    reject: 'Reddet',
+    finishHalftime: 'Devam Et →',
+    playerSold: 'Oyuncu satıldı!',
+    offerSent: 'Teklif gönderildi!',
+    offerAccepted: 'Teklif kabul edildi!'
   },
   en: {
     // Header
@@ -212,7 +234,29 @@ export const translations = {
     lineupPhase: 'Starting XI & Formation',
     tacticsPhase: 'Tactics',
     matchPhase: 'Match',
-    resultPhase: 'Match Report'
+    halftimePhase: 'Halftime',
+    resultPhase: 'Match Report',
+
+    // Halftime Transfer Window
+    halftimeKicker: 'HALFTIME TRANSFER WINDOW',
+    halftimeTitle: 'Transfer Time',
+    halftimeSubtitle: 'Sell players, send trade offers or buy. Strengthen your squad before time runs out!',
+    halftimeTimer: 'Time Remaining',
+    sellPlayer: 'Sell Player',
+    sellPrice: 'Selling Price',
+    sellButton: 'List for Sale',
+    makeOffer: 'Make Trade Offer',
+    selectPlayer: 'Select Player',
+    wantPlayer: 'Player You Want',
+    sendOffer: 'Send Offer',
+    incomingOffers: 'Incoming Offers',
+    noOffers: 'No offers yet',
+    accept: 'Accept',
+    reject: 'Reject',
+    finishHalftime: 'Continue →',
+    playerSold: 'Player sold!',
+    offerSent: 'Offer sent!',
+    offerAccepted: 'Offer accepted!'
   }
 };
 

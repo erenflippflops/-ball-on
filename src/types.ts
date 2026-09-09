@@ -30,6 +30,7 @@ export interface Player {
   secondaryPositions: Position[];
   baseOverall: number;
   marketTier: MarketTier;
+  marketValue?: number; // CR - Expected auction price (calculated dynamically)
   archetype: string;
   preferredRoles: string[];
   attributes: PlayerAttributes;
@@ -49,7 +50,7 @@ export interface Team {
   lineup?: Record<string, string>; // slot -> playerId
 }
 
-export type Phase = 'lobby' | 'auction' | 'completion' | 'steal' | 'trade' | 'lineup' | 'tactics' | 'match' | 'result';
+export type Phase = 'lobby' | 'auction' | 'completion' | 'steal' | 'trade' | 'lineup' | 'tactics' | 'match' | 'halftime' | 'second_half' | 'result';
 
 export interface Room {
   id: string;
@@ -61,8 +62,12 @@ export interface Room {
   tradeOffers?: Array<{ from: string; to: string; give: Player; want: Player }>;
   tradeResponses?: Set<string>; // Track who has responded to trade offers
   matchResult?: MatchResult;
+  firstHalfResult?: MatchResult; // First half stats
   marketTrend?: 'boom' | 'crash' | 'stable';
   upcomingStars?: string[]; // Player IDs that are leaked as "coming soon"
+  halftimeOffers?: Array<{ from: string; to: string; give: Player; want: Player; price?: number }>; // Transfer offers during halftime
+  halftimeResponses?: Set<string>; // Track who has finished halftime transfer window
+  halftimeTimer?: number; // Halftime countdown in seconds
   auctionState?: {
     currentBids: Record<string, number>; // teamId -> bid amount
     highestBidder: string | null;

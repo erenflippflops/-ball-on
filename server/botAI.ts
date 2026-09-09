@@ -16,6 +16,10 @@ export class BotAI {
     if (this.slotsRemaining <= 0) return false;
     if (this.budget <= this.slotsRemaining) return false; // Reserve minimum budget
 
+    // Check if we can afford the market value
+    const marketValue = player.marketValue || 5;
+    if (this.budget < marketValue) return false;
+
     // Check if position is needed
     const positionCount = this.team.roster.filter(p => p.primaryPosition === player.primaryPosition).length;
 
@@ -31,15 +35,15 @@ export class BotAI {
 
     // Tier-based decision
     if (player.marketTier === 'star') {
-      return this.budget >= 15; // Save budget for stars
+      return this.budget >= marketValue + 5; // Need extra budget for stars
     }
 
     if (player.marketTier === 'high') {
-      return this.budget >= 8;
+      return this.budget >= marketValue + 3;
     }
 
     if (player.marketTier === 'medium') {
-      return this.budget >= 3;
+      return this.budget >= marketValue;
     }
 
     // Buy low tier players if budget is tight
@@ -48,28 +52,22 @@ export class BotAI {
 
   // Calculate bid amount
   calculateBid(player: Player): number {
-    let baseBid = 1;
+    const marketValue = player.marketValue || 5;
+    let baseBid = marketValue;
 
-    // Tier-based bidding
-    switch (player.marketTier) {
-      case 'star':
-        baseBid = Math.min(15, Math.floor(this.budget * 0.15));
-        break;
-      case 'high':
-        baseBid = Math.min(8, Math.floor(this.budget * 0.08));
-        break;
-      case 'medium':
-        baseBid = Math.min(4, Math.floor(this.budget * 0.04));
-        break;
-      case 'low':
-        baseBid = 1;
-        break;
-    }
+    // Add some randomness: 80-120% of market value
+    const randomFactor = 0.8 + Math.random() * 0.4;
+    baseBid = Math.round(baseBid * randomFactor);
 
-    // Check position need
+    // Check position need - increase bid if position is needed
     const positionCount = this.team.roster.filter(p => p.primaryPosition === player.primaryPosition).length;
     if (positionCount === 0) {
-      baseBid = Math.floor(baseBid * 1.5); // Increase bid for needed positions
+      baseBid = Math.round(baseBid * 1.2); // Increase bid for needed positions
+    }
+
+    // Tier-based adjustment
+    if (player.marketTier === 'star') {
+      baseBid = Math.round(baseBid * 1.1); // Willing to overpay for stars
     }
 
     // Ensure we reserve budget for remaining slots

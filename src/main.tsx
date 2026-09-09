@@ -323,7 +323,13 @@ function App() {
       )}
 
       <header>
-        <div className="brand">
+        <div className="brand" onClick={() => {
+          if (phase !== 'lobby' && window.confirm(language === 'tr' ? 'Ana ekrana dönmek istediğinize emin misiniz? Oyun devam edecek.' : 'Are you sure you want to return to lobby? Game will continue.')) {
+            window.location.reload();
+          } else if (phase === 'lobby') {
+            window.location.reload();
+          }
+        }} style={{ cursor: 'pointer' }}>
           <span className="ball">⚽</span>
           <div>
             <strong>BALL ON!</strong>
@@ -759,6 +765,14 @@ function Auction(p: any) {
           <div className="tier">
             {x.marketTier.toUpperCase()}
             <small>{t.quality}</small>
+          </div>
+          <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(132, 204, 22, 0.1)', borderRadius: '6px', border: '1px solid rgba(132, 204, 22, 0.3)' }}>
+            <small style={{ display: 'block', fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              {p.language === 'tr' ? 'Tahmini Piyasa Değeri' : 'Est. Market Value'}
+            </small>
+            <strong style={{ fontSize: '18px', color: '#84cc16', fontFamily: 'var(--font-heading)' }}>
+              {x.marketValue || 5} CR
+            </strong>
           </div>
           <div className="attributes">
             <div>
