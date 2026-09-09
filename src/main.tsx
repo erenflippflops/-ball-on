@@ -780,6 +780,34 @@ function Lobby(p: any) {
           <em>Oyunu değiştir.</em>
         </h1>
         <p className="intro">Gizli oyuncu havuzundan teklif ver, rakipten oyuncu çal, doğru kimyayla turnuvayı kazan.</p>
+
+        {/* Game Explanation */}
+        <div style={{
+          marginTop: '30px',
+          padding: '20px',
+          background: 'rgba(15, 23, 42, 0.6)',
+          borderRadius: '12px',
+          border: '1px solid rgba(132, 204, 22, 0.2)',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ margin: '0 0 15px', fontSize: '1.1rem', color: '#84cc16', fontFamily: 'var(--font-heading)' }}>
+            🎯 NASIL OYNANIR?
+          </h3>
+          <div style={{ fontSize: '0.9rem', lineHeight: '1.8', color: '#E2E8F0' }}>
+            <p style={{ margin: '0 0 10px' }}>
+              <strong style={{ color: '#84cc16' }}>1. Açık Artırma:</strong> 14 oyuncuyu sırayla sat satın al. Piyasa değerine dikkat et, bütçeni iyi kullan!
+            </p>
+            <p style={{ margin: '0 0 10px' }}>
+              <strong style={{ color: '#84cc16' }}>2. Oyuncu Çalma:</strong> Rakipten bir oyuncu çal, biri seni korusun. İstediğin oyuncuyu seç!
+            </p>
+            <p style={{ margin: '0 0 10px' }}>
+              <strong style={{ color: '#84cc16' }}>3. Takas:</strong> Rakiple oyuncu takası teklif et veya kabul et.
+            </p>
+            <p style={{ margin: '0' }}>
+              <strong style={{ color: '#84cc16' }}>4. Maç:</strong> İlk 11'ini seç, taktiğini belirle ve rakibinle kapış!
+            </p>
+          </div>
+        </div>
       </div>
       <div className="card lobby-card">
         <h2>Oyuna katıl</h2>
