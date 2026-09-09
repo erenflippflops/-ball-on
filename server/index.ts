@@ -782,6 +782,131 @@ io.on('connection', (socket) => {
   });
 });
 
+// Admin API endpoints
+app.get('/admin/rooms', (req, res) => {
+  const roomList = Array.from(rooms.values()).map(room => ({
+    id: room.id,
+    phase: room.phase,
+    teams: room.teams.map(t => ({ id: t.id, name: t.name, budget: t.budget, roster: t.roster.length })),
+    competition: room.competition,
+    maxPlayers: room.maxPlayers
+  }));
+  res.json({ rooms: roomList });
+});
+
+app.get('/admin/room/:roomId', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+  res.json({ room });
+});
+
+app.post('/admin/room/:roomId/phase', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { phase } = req.body;
+  room.phase = phase;
+
+  // Initialize phase-specific state
+  if (phase === 'auction' && !room.auctionState) {
+    room.auctionState = {
+      currentBids: {},
+      highestBidder: null,
+      highestBid: 0,
+      timeLeft: 30,
+      timerStarted: Date.now(),
+      skippedPlayers: []
+    };
+    startAuctionTimer(req.params.roomId, io);
+  }
+
+  io.to(req.params.roomId).emit('phase_changed', { phase });
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/budget', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { teamId, amount } = req.body;
+  const team = room.teams.find(t => t.id === teamId);
+  if (!team) {
+    return res.status(404).json({ error: 'Team not found' });
+  }
+
+  team.budget += amount;
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/skip', (req, res) => {
+  const room = rooms.get(req.params.roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  const { index } = req.body;
+  room.currentPlayerIndex = index;
+  io.to(req.params.roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/finish-auction', (req, res) => {
+  const roomId = req.params.roomId;
+  const room = rooms.get(roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  finalizeAuction(roomId, io);
+  res.json({ success: true });
+});
+
+app.post('/admin/room/:roomId/reset', (req, res) => {
+  const roomId = req.params.roomId;
+  const room = rooms.get(roomId);
+  if (!room) {
+    return res.status(404).json({ error: 'Room not found' });
+  }
+
+  // Reset room to initial state
+  room.phase = 'lobby';
+  room.currentPlayerIndex = 0;
+  room.auctionState = undefined;
+  room.stealChoices = {};
+  room.tradeOffers = [];
+  room.tradeResponses = new Set();
+  room.matchResult = undefined;
+
+  room.teams.forEach(team => {
+    team.budget = 100;
+    team.roster = [];
+    team.scouts = 3;
+    team.buff = 0;
+    team.ready = false;
+    team.formation = undefined;
+    team.tactic = undefined;
+    team.lineup = undefined;
+  });
+
+  const timer = auctionTimers.get(roomId);
+  if (timer) {
+    clearInterval(timer);
+    auctionTimers.delete(roomId);
+  }
+
+  io.to(roomId).emit('phase_changed', { phase: 'lobby' });
+  io.to(roomId).emit('room_updated', room);
+  res.json({ success: true });
+});
+
 // Process steal phase logic
 function processStealPhase(room: Room) {
   if (!room.stealChoices) return;
