@@ -69,6 +69,7 @@ export interface Room {
   halftimeOffers?: Array<{ from: string; to: string; give: Player; want: Player; price?: number }>; // Transfer offers during halftime
   halftimeResponses?: Set<string>; // Track who has finished halftime transfer window
   halftimeTimer?: number; // Halftime countdown in seconds
+  marketplace?: Array<{ player: Player; sellerId: string; sellerName: string; price: number }>; // Players for sale in marketplace
   auctionState?: {
     currentBids: Record<string, number>; // teamId -> bid amount
     highestBidder: string | null;

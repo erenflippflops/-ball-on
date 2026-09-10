@@ -42,6 +42,7 @@ function App() {
   // Halftime transfer window state
   const [halftimeTimer, setHalftimeTimer] = useState(90);
   const [halftimeOffers, setHalftimeOffers] = useState<Array<{ id: number; from: string; fromTeam: string; give: Player; want: Player }>>([]);
+  const [marketplace, setMarketplace] = useState<Array<{ player: Player; sellerId: string; sellerName: string; price: number }>>([]);
 
   // Admin mode state
   const [isAdmin, setIsAdmin] = useState(false);
@@ -81,6 +82,9 @@ function App() {
       }
       if (room.tradeOffers) {
         setTradeOffers(room.tradeOffers);
+      }
+      if (room.marketplace) {
+        setMarketplace(room.marketplace);
       }
     });
 
@@ -351,8 +355,22 @@ function App() {
   // Halftime handlers
   const handleSellPlayer = async (playerId: string, price: number) => {
     if (!roomId) return;
-    // TODO: Implement sell player socket event
-    showNotification(t.playerSold, 'success');
+    const result = await socketService.sellPlayer(roomId, playerId, price);
+    if (result.success) {
+      showNotification(language === 'tr' ? 'Oyuncu pazara eklendi!' : 'Player listed on marketplace!', 'success');
+    } else {
+      showNotification(result.error || 'Failed to sell player', 'error');
+    }
+  };
+
+  const handleBuyFromMarketplace = async (playerId: string) => {
+    if (!roomId) return;
+    const result = await socketService.buyFromMarketplace(roomId, playerId);
+    if (result.success) {
+      showNotification(language === 'tr' ? 'Oyuncu satın alındı!' : 'Player purchased!', 'success');
+    } else {
+      showNotification(result.error || 'Failed to buy player', 'error');
+    }
   };
 
   const handleMakeOffer = async (targetTeamId: string, givePlayerId: string, wantPlayerId: string) => {
@@ -859,10 +877,12 @@ function App() {
             language={language}
             halftimeTimer={halftimeTimer}
             halftimeOffers={halftimeOffers}
+            marketplace={marketplace}
             onSellPlayer={handleSellPlayer}
             onMakeOffer={handleMakeOffer}
             onRespondOffer={handleRespondOffer}
             onFinishHalftime={handleFinishHalftime}
+            onBuyFromMarketplace={handleBuyFromMarketplace}
             chosenTactic={chosenTactic}
             chosenFormation={chosenFormation}
           />
@@ -1248,6 +1268,8 @@ function Game(p: any) {
             onRespondOffer={p.onRespondOffer}
             onFinish={p.onFinishHalftime}
             incomingOffers={p.halftimeOffers}
+            marketplace={p.marketplace}
+            onBuyFromMarketplace={p.onBuyFromMarketplace}
           />
         )}
         {p.phase === 'result' && <Result result={p.matchResult} />}

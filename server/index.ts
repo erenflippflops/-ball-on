@@ -170,6 +170,8 @@ function finalizeAuction(roomId: string, io: Server) {
     // Move to halftime transfer window
     room.phase = 'halftime';
     room.halftimeTimer = 90; // 90 seconds for transfers
+    room.marketplace = []; // Initialize empty marketplace
+    room.halftimeOffers = [];
     io.to(roomId).emit('phase_changed', { phase: 'halftime' });
     io.to(roomId).emit('room_updated', room);
     return;
@@ -873,6 +875,111 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('phase_changed', { phase: 'second_half_auction', currentPlayer: nextPlayer });
       io.to(roomId).emit('room_updated', room);
     }
+
+    callback({ success: true });
+  });
+
+  // Sell player to marketplace
+  socket.on('sell_player', ({ roomId, playerId, price }, callback) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      callback({ success: false, error: 'Oda bulunamadı' });
+      return;
+    }
+
+    if (room.phase !== 'halftime') {
+      callback({ success: false, error: 'Sadece devre arasında satış yapılabilir' });
+      return;
+    }
+
+    const sellerTeam = room.teams.find(t => t.id === socket.id);
+    if (!sellerTeam) {
+      callback({ success: false, error: 'Takım bulunamadı' });
+      return;
+    }
+
+    const player = sellerTeam.roster.find(p => p.id === playerId);
+    if (!player) {
+      callback({ success: false, error: 'Oyuncu bulunamadı' });
+      return;
+    }
+
+    // Add to marketplace
+    if (!room.marketplace) room.marketplace = [];
+    room.marketplace.push({
+      player,
+      sellerId: sellerTeam.id,
+      sellerName: sellerTeam.name,
+      price
+    });
+
+    // Remove from seller's roster
+    sellerTeam.roster = sellerTeam.roster.filter(p => p.id !== playerId);
+    sellerTeam.budget += price;
+
+    io.to(roomId).emit('room_updated', room);
+    io.to(roomId).emit('player_listed', {
+      player: player.name,
+      seller: sellerTeam.name,
+      price
+    });
+
+    callback({ success: true });
+  });
+
+  // Buy player from marketplace
+  socket.on('buy_from_marketplace', ({ roomId, playerId }, callback) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      callback({ success: false, error: 'Oda bulunamadı' });
+      return;
+    }
+
+    if (room.phase !== 'halftime') {
+      callback({ success: false, error: 'Sadece devre arasında alım yapılabilir' });
+      return;
+    }
+
+    const buyerTeam = room.teams.find(t => t.id === socket.id);
+    if (!buyerTeam) {
+      callback({ success: false, error: 'Takım bulunamadı' });
+      return;
+    }
+
+    const listing = room.marketplace?.find(l => l.player.id === playerId);
+    if (!listing) {
+      callback({ success: false, error: 'Oyuncu marketplace\'te bulunamadı' });
+      return;
+    }
+
+    if (listing.sellerId === socket.id) {
+      callback({ success: false, error: 'Kendi oyuncunu alamazsın' });
+      return;
+    }
+
+    if (buyerTeam.budget < listing.price) {
+      callback({ success: false, error: 'Yeterli bütçen yok' });
+      return;
+    }
+
+    if (buyerTeam.roster.length >= 14) {
+      callback({ success: false, error: 'Kadro dolu' });
+      return;
+    }
+
+    // Transfer player
+    buyerTeam.roster.push(listing.player);
+    buyerTeam.budget -= listing.price;
+
+    // Remove from marketplace
+    room.marketplace = room.marketplace?.filter(l => l.player.id !== playerId);
+
+    io.to(roomId).emit('room_updated', room);
+    io.to(roomId).emit('player_bought', {
+      player: listing.player.name,
+      buyer: buyerTeam.name,
+      price: listing.price
+    });
 
     callback({ success: true });
   });

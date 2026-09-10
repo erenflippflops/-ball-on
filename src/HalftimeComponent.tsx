@@ -12,6 +12,8 @@ interface HalftimeProps {
   onRespondOffer: (offerId: number, accept: boolean) => void;
   onFinish: () => void;
   incomingOffers: Array<{ id: number; from: string; fromTeam: string; give: Player; want: Player }>;
+  marketplace: Array<{ player: Player; sellerId: string; sellerName: string; price: number }>;
+  onBuyFromMarketplace: (playerId: string) => void;
 }
 
 export function HalftimeComponent(props: HalftimeProps) {
@@ -155,45 +157,45 @@ export function HalftimeComponent(props: HalftimeProps) {
           </button>
         </div>
 
-        {/* Incoming Offers Section */}
+        {/* Marketplace Section */}
         <div className="halftime-section">
-          <h3>{t.incomingOffers}</h3>
-          {props.incomingOffers.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>{t.noOffers}</p>
+          <h3>{props.language === 'tr' ? '🛒 Pazar' : '🛒 Marketplace'}</h3>
+          {props.marketplace.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>
+              {props.language === 'tr' ? 'Henüz satılık oyuncu yok' : 'No players for sale yet'}
+            </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {props.incomingOffers.map(offer => (
-                <div key={offer.id} style={{ padding: '15px', background: 'rgba(10, 26, 28, 0.6)', borderRadius: '8px', border: '1px solid rgba(132, 204, 22, 0.2)' }}>
-                  <small style={{ color: '#94a3b8', fontSize: '11px' }}>
-                    {props.language === 'tr' ? 'Gönderen' : 'From'}: {offer.fromTeam}
-                  </small>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '10px 0' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '400px', overflowY: 'auto' }}>
+              {props.marketplace.map((listing, idx) => (
+                <div key={idx} style={{ padding: '15px', background: 'rgba(10, 26, 28, 0.6)', borderRadius: '8px', border: '1px solid rgba(132, 204, 22, 0.2)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <div>
-                      <strong>{offer.give.name}</strong>
-                      <small style={{ display: 'block', color: '#94a3b8' }}>{offer.give.primaryPosition} - {offer.give.baseOverall}</small>
+                      <strong style={{ fontSize: '16px' }}>{listing.player.name}</strong>
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                        <span style={{ color: '#84cc16', fontSize: '12px', fontWeight: 600 }}>{listing.player.primaryPosition}</span>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>OVR {listing.player.baseOverall}</span>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '20px', color: '#84cc16' }}>⇄</div>
-                    <div>
-                      <strong>{offer.want.name}</strong>
-                      <small style={{ display: 'block', color: '#94a3b8' }}>{offer.want.primaryPosition} - {offer.want.baseOverall}</small>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#b8ed61' }}>{listing.price} CR</div>
+                      <small style={{ color: '#94a3b8', fontSize: '10px' }}>{listing.sellerName}</small>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '10px' }}>
+                  {listing.sellerId !== props.me.id && (
                     <button
                       className="primary"
-                      onClick={() => props.onRespondOffer(offer.id, true)}
-                      style={{ flex: 1, padding: '8px', fontSize: '14px' }}
+                      onClick={() => props.onBuyFromMarketplace(listing.player.id)}
+                      disabled={props.me.budget < listing.price || props.me.roster.length >= 14}
+                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
                     >
-                      {t.accept}
+                      {props.me.budget < listing.price
+                        ? (props.language === 'tr' ? 'Yetersiz Bütçe' : 'Insufficient Budget')
+                        : props.me.roster.length >= 14
+                        ? (props.language === 'tr' ? 'Kadro Dolu' : 'Squad Full')
+                        : (props.language === 'tr' ? '💰 Satın Al' : '💰 Buy Now')
+                      }
                     </button>
-                    <button
-                      className="ghost"
-                      onClick={() => props.onRespondOffer(offer.id, false)}
-                      style={{ flex: 1, padding: '8px', fontSize: '14px' }}
-                    >
-                      {t.reject}
-                    </button>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -132,6 +132,22 @@ class SocketService {
     });
   }
 
+  sellPlayer(roomId: string, playerId: string, price: number): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      this.socket?.emit('sell_player', { roomId, playerId, price }, (response: any) => {
+        resolve(response);
+      });
+    });
+  }
+
+  buyFromMarketplace(roomId: string, playerId: string): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      this.socket?.emit('buy_from_marketplace', { roomId, playerId }, (response: any) => {
+        resolve(response);
+      });
+    });
+  }
+
   onRoomUpdated(callback: (room: Room) => void) {
     this.socket?.on('room_updated', callback);
   }
