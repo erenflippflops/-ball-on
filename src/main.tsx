@@ -827,6 +827,8 @@ function App() {
             onMakeOffer={handleMakeOffer}
             onRespondOffer={handleRespondOffer}
             onFinishHalftime={handleFinishHalftime}
+            chosenTactic={chosenTactic}
+            chosenFormation={chosenFormation}
           />
         )}
       </main>
