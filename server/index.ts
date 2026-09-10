@@ -372,45 +372,97 @@ io.on('connection', (socket) => {
       }
     }
 
-    room.phase = 'auction';
-    room.currentPlayerIndex = 0;
+    // Move to tactic selection phase instead of directly to auction
+    room.phase = 'tactic_selection';
 
-    // Initialize auction state
-    room.auctionState = {
-      currentBids: {},
-      highestBidder: null,
-      highestBid: 0,
-      timeLeft: 14,
-      timerStarted: Date.now(),
-      skippedPlayers: []
-    };
+    callback({ success: true });
+    io.to(roomId).emit('phase_changed', { phase: 'tactic_selection' });
+    io.to(roomId).emit('room_updated', room);
+  });
 
-    // Initialize market mechanics
-    room.marketTrend = 'stable';
+  // Select tactic (Pre-auction)
+  socket.on('select_tactic', ({ roomId, tacticId, formation }, callback) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      callback({ success: false, error: 'Oda bulunamadı' });
+      return;
+    }
 
-    // Pick 3-5 random upcoming stars to leak
-    const starPlayers = room.auctionPool
-      .filter(p => p.marketTier === 'star' || p.marketTier === 'high')
-      .slice(0, 20);
-    const leakCount = Math.floor(Math.random() * 3) + 3; // 3-5 players
-    room.upcomingStars = [];
-    for (let i = 0; i < leakCount && i < starPlayers.length; i++) {
-      const randomIndex = Math.floor(Math.random() * starPlayers.length);
-      const player = starPlayers[randomIndex];
+    const playerTeam = room.teams.find(t => t.id === socket.id);
+    if (!playerTeam) {
+      callback({ success: false, error: 'Takım bulunamadı' });
+      return;
+    }
+
+    // Save chosen tactic and formation
+    playerTeam.chosenTactic = tacticId;
+    playerTeam.formation = formation;
+
+    // Bots also select random tactics
+    const tacticOptions = ['tiki-taka', 'counter-attack', 'physical-direct', 'high-press', 'wing-play', 'possession'];
+    const formationOptions = ['4-3-3', '4-4-2', '3-5-2', '4-2-3-1', '3-4-3'];
+
+    room.teams.forEach(team => {
+      if (team.id.startsWith('bot-') && !team.chosenTactic) {
+        team.chosenTactic = tacticOptions[Math.floor(Math.random() * tacticOptions.length)];
+        team.formation = formationOptions[Math.floor(Math.random() * formationOptions.length)];
+      }
+    });
+
+    // Check if all teams have selected tactics
+    const allSelected = room.teams.every(t => t.chosenTactic);
+
+    if (allSelected) {
+      // Move to auction phase
+      room.phase = 'auction';
+      room.currentPlayerIndex = 0;
+
+      // Initialize auction state
+      room.auctionState = {
+        currentBids: {},
+        highestBidder: null,
+        highestBid: 0,
+        timeLeft: 14,
+        timerStarted: Date.now(),
+        skippedPlayers: []
+      };
+
+      // Initialize market mechanics
+      room.marketTrend = 'stable';
+
+      // Pick 3-5 random upcoming stars to leak
+      const starPlayers = room.auctionPool
+        .filter(p => p.marketTier === 'star' || p.marketTier === 'high')
+        .slice(0, 20);
+      const leakCount = Math.floor(Math.random() * 3) + 3; // 3-5 players
+      room.upcomingStars = [];
+      for (let i = 0; i < leakCount && i < starPlayers.length; i++) {
+        const randomIndex = Math.floor(Math.random() * starPlayers.length);
+        const player = starPlayers[randomIndex];
+        if (!room.upcomingStars.includes(player.id)) {
+          room.upcomingStars.push(player.id);
+        }
+      }
+
+      // Start auction timer
+      startAuctionTimer(roomId, io);
+
+      io.to(roomId).emit('phase_changed', { phase: 'auction', currentPlayer: room.auctionPool[0] });
+      io.to(roomId).emit('market_gossip', {
+        message: `📰 Transfer dedikoduları: ${leakCount} yıldız oyuncu havuzda olacak!`,
+        stars: room.upcomingStars.map(id => room.auctionPool.find(p => p.id === id)?.name).filter(Boolean)
+      });
+    }
+
+    callback({ success: true });
+    io.to(roomId).emit('room_updated', room);
+  });
       if (!room.upcomingStars.includes(player.id)) {
         room.upcomingStars.push(player.id);
       }
     }
 
-    // Start auction timer
-    startAuctionTimer(roomId, io);
-
     callback({ success: true });
-    io.to(roomId).emit('phase_changed', { phase: 'auction', currentPlayer: room.auctionPool[0] });
-    io.to(roomId).emit('market_gossip', {
-      message: `📰 Transfer dedikoduları: ${leakCount} yıldız oyuncu havuzda olacak!`,
-      stars: room.upcomingStars.map(id => room.auctionPool.find(p => p.id === id)?.name).filter(Boolean)
-    });
     io.to(roomId).emit('room_updated', room);
   });
 

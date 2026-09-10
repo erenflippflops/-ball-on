@@ -6,6 +6,7 @@ import { socketService } from './socketService';
 import type { Player, Team, Room, Phase } from './types';
 import { translations, type Language } from './translations';
 import { HalftimeComponent } from './HalftimeComponent';
+import { TACTICS, isPlayerSuitableForTactic } from './tacticsSystem';
 
 function App() {
   const [phase, setPhase] = useState<Phase>('lobby');
@@ -47,6 +48,10 @@ function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  // Pre-auction tactic selection
+  const [chosenTactic, setChosenTactic] = useState<string>('');
+  const [chosenFormation, setChosenFormation] = useState<string>('4-3-3');
 
   const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
@@ -765,6 +770,18 @@ function App() {
             competition={competition}
             setCompetition={setCompetition}
           />
+        ) : phase === 'tactic_selection' ? (
+          <TacticSelection
+            onSelect={(tacticId, formation) => {
+              setChosenTactic(tacticId);
+              setChosenFormation(formation);
+              socketService.selectTactic(roomId, tacticId, formation);
+            }}
+            selectedTactic={chosenTactic}
+            selectedFormation={chosenFormation}
+            setSelectedTactic={setChosenTactic}
+            setSelectedFormation={setChosenFormation}
+          />
         ) : (
           <Game
             phase={phase}
@@ -849,6 +866,148 @@ function CircularTimer({ timeLeft, total = 30 }: { timeLeft: number; total?: num
       <div className={`timer-text ${getTimerClass()}`}>
         {timeLeft}
       </div>
+    </div>
+  );
+}
+
+// Tactic Selection Screen (Pre-Auction)
+function TacticSelection(p: {
+  onSelect: (tacticId: string, formation: string) => void;
+  selectedTactic: string;
+  selectedFormation: string;
+  setSelectedTactic: (id: string) => void;
+  setSelectedFormation: (f: string) => void;
+}) {
+  const selectedTacticData = TACTICS.find(t => t.id === p.selectedTactic);
+  const recommendedFormations = selectedTacticData?.formations || ['4-3-3', '4-4-2', '3-5-2'];
+
+  return (
+    <div className="panel" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <p className="kicker">BALL ON! · STRATEJİ</p>
+      <h1>Taktik ve Diziliş Seç</h1>
+      <p style={{ marginBottom: '30px' }}>
+        Oyun başlamadan önce taktiğini ve dizilişini seç. Bu seçim tüm oyun boyunca <strong>sabit kalacak</strong>.
+        Taktiğine uygun oyuncular açık artırmada ⭐ yıldızlı görünecek.
+      </p>
+
+      <div style={{ marginBottom: '40px' }}>
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', color: '#84cc16' }}>Taktiğini Seç:</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
+          {TACTICS.map(tactic => (
+            <button
+              key={tactic.id}
+              onClick={() => p.setSelectedTactic(tactic.id)}
+              style={{
+                padding: '20px',
+                background: p.selectedTactic === tactic.id ? 'rgba(132, 204, 22, 0.2)' : 'rgba(15, 23, 42, 0.8)',
+                border: p.selectedTactic === tactic.id ? '2px solid #84cc16' : '1px solid rgba(132, 204, 22, 0.3)',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s'
+              }}
+            >
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{tactic.icon}</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '5px', color: '#F1F5F9' }}>
+                {tactic.name}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.4' }}>
+                {tactic.description}
+              </div>
+              {p.selectedTactic === tactic.id && (
+                <div style={{ marginTop: '10px', fontSize: '0.75rem', color: '#84cc16' }}>
+                  ✓ Seçildi
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {p.selectedTactic && (
+        <div style={{ marginBottom: '40px' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', color: '#84cc16' }}>
+            Diziliş Seç {selectedTacticData && `(${selectedTacticData.name} için önerilen)`}:
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+            {['4-3-3', '4-4-2', '3-5-2', '4-2-3-1', '3-4-3'].map(formation => {
+              const isRecommended = recommendedFormations.includes(formation);
+              return (
+                <button
+                  key={formation}
+                  onClick={() => p.setSelectedFormation(formation)}
+                  style={{
+                    padding: '15px 10px',
+                    background: p.selectedFormation === formation ? '#84cc16' : isRecommended ? 'rgba(132, 204, 22, 0.15)' : 'rgba(15, 23, 42, 0.8)',
+                    border: p.selectedFormation === formation ? '2px solid #84cc16' : isRecommended ? '1px solid rgba(132, 204, 22, 0.5)' : '1px solid rgba(132, 204, 22, 0.3)',
+                    borderRadius: '8px',
+                    color: p.selectedFormation === formation ? '#0F172A' : '#F1F5F9',
+                    cursor: 'pointer',
+                    fontWeight: p.selectedFormation === formation ? 700 : 500,
+                    fontSize: '0.9rem',
+                    position: 'relative'
+                  }}
+                >
+                  {formation}
+                  {isRecommended && p.selectedFormation !== formation && (
+                    <div style={{ fontSize: '0.65rem', color: '#84cc16', marginTop: '3px' }}>
+                      ⭐ Önerilen
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <button
+        className="primary"
+        onClick={() => p.onSelect(p.selectedTactic, p.selectedFormation)}
+        disabled={!p.selectedTactic}
+        style={{
+          opacity: !p.selectedTactic ? 0.5 : 1,
+          cursor: !p.selectedTactic ? 'not-allowed' : 'pointer'
+        }}
+      >
+        Taktiği onayla ve açık artırmaya başla →
+      </button>
+
+      {p.selectedTactic && selectedTacticData && (
+        <div style={{
+          marginTop: '30px',
+          padding: '20px',
+          background: 'rgba(132, 204, 22, 0.1)',
+          border: '1px solid rgba(132, 204, 22, 0.3)',
+          borderRadius: '8px'
+        }}>
+          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '10px' }}>
+            <strong style={{ color: '#84cc16' }}>{selectedTacticData.name}</strong> taktiğine uygun arketipler:
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {selectedTacticData.preferredArchetypes.slice(0, 8).map(archetype => (
+              <span
+                key={archetype}
+                style={{
+                  padding: '4px 10px',
+                  background: 'rgba(132, 204, 22, 0.15)',
+                  border: '1px solid rgba(132, 204, 22, 0.3)',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  color: '#84cc16'
+                }}
+              >
+                {archetype}
+              </span>
+            ))}
+            {selectedTacticData.preferredArchetypes.length > 8 && (
+              <span style={{ fontSize: '0.75rem', color: '#94a3b8', padding: '4px 10px' }}>
+                +{selectedTacticData.preferredArchetypes.length - 8} daha...
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

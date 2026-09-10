@@ -116,6 +116,14 @@ class SocketService {
     });
   }
 
+  selectTactic(roomId: string, tacticId: string, formation: string): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      this.socket?.emit('select_tactic', { roomId, tacticId, formation }, (response: any) => {
+        resolve(response);
+      });
+    });
+  }
+
   onRoomUpdated(callback: (room: Room) => void) {
     this.socket?.on('room_updated', callback);
   }

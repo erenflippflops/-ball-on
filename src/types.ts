@@ -48,9 +48,10 @@ export interface Team {
   formation?: string;
   tactic?: string;
   lineup?: Record<string, string>; // slot -> playerId
+  chosenTactic?: string; // Pre-auction tactic selection (locked for entire game)
 }
 
-export type Phase = 'lobby' | 'auction' | 'completion' | 'steal' | 'trade' | 'lineup' | 'tactics' | 'match' | 'halftime' | 'second_half' | 'result';
+export type Phase = 'lobby' | 'tactic_selection' | 'auction' | 'completion' | 'steal' | 'trade' | 'lineup' | 'tactics' | 'match' | 'halftime' | 'second_half' | 'result';
 
 export interface Room {
   id: string;
