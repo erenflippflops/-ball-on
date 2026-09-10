@@ -204,7 +204,7 @@ function AdminPanel() {
               <div style={{ marginBottom: '30px' }}>
                 <h3 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>⚡ Phase Control</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                  {(['lobby', 'tactic_selection', 'auction', 'steal', 'trade', 'lineup', 'tactics', 'match', 'halftime', 'second_half', 'result'] as Phase[]).map(phase => (
+                  {(['lobby', 'tactic_selection', 'auction', 'steal', 'trade', 'match', 'halftime', 'second_half', 'result'] as Phase[]).map(phase => (
                     <button
                       key={phase}
                       onClick={() => changePhase(phase)}

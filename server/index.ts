@@ -810,8 +810,9 @@ io.on('connection', (socket) => {
         }
       });
 
-      room.phase = 'lineup';
-      io.to(roomId).emit('phase_changed', { phase: 'lineup' });
+      // Skip lineup and tactics phases, go directly to match
+      room.phase = 'match';
+      io.to(roomId).emit('phase_changed', { phase: 'match' });
       io.to(roomId).emit('room_updated', room);
     } else {
       // Send room update to show responses
@@ -819,47 +820,14 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Save lineup
+  // Save lineup - deprecated, kept for compatibility
   socket.on('save_lineup', ({ roomId, formation, lineup }, callback) => {
-    const room = rooms.get(roomId);
-    if (!room) {
-      callback({ success: false, error: 'Oda bulunamadı' });
-      return;
-    }
-
-    const playerTeam = room.teams.find(t => t.id === socket.id);
-    if (!playerTeam) {
-      callback({ success: false, error: 'Takım bulunamadı' });
-      return;
-    }
-
-    playerTeam.formation = formation;
-    playerTeam.lineup = lineup;
-
-    room.phase = 'tactics';
     callback({ success: true });
-    io.to(roomId).emit('phase_changed', { phase: 'tactics' });
-    io.to(roomId).emit('room_updated', room);
   });
 
-  // Save tactics
+  // Save tactics - deprecated, kept for compatibility
   socket.on('save_tactics', ({ roomId, tactic }, callback) => {
-    const room = rooms.get(roomId);
-    if (!room) {
-      callback({ success: false, error: 'Oda bulunamadı' });
-      return;
-    }
-
-    const playerTeam = room.teams.find(t => t.id === socket.id);
-    if (!playerTeam) {
-      callback({ success: false, error: 'Takım bulunamadı' });
-      return;
-    }
-
-    playerTeam.tactic = tactic;
-
     callback({ success: true });
-    io.to(roomId).emit('room_updated', room);
   });
 
   // Simulate match

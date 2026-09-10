@@ -1200,8 +1200,6 @@ function Game(p: any) {
         {p.phase === 'auction' && <Auction {...p} />}
         {p.phase === 'steal' && <Steal {...p} />}
         {p.phase === 'trade' && <Trade {...p} />}
-        {p.phase === 'lineup' && <Lineup {...p} />}
-        {p.phase === 'tactics' && <Tactics {...p} />}
         {p.phase === 'match' && <Match />}
         {p.phase === 'halftime' && (
           <HalftimeComponent
