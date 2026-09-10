@@ -54,6 +54,9 @@ function App() {
   const [chosenTactic, setChosenTactic] = useState<string>('');
   const [chosenFormation, setChosenFormation] = useState<string>('4-3-3');
 
+  // Auction phase timer (6 minutes = 360 seconds)
+  const [auctionPhaseTimeLeft, setAuctionPhaseTimeLeft] = useState<number>(360);
+
   const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
@@ -89,6 +92,10 @@ function App() {
         setHighestBid(0);
         setHighestBidder('');
         setBid(1);
+      }
+      // Start auction phase timer (6 minutes)
+      if (data.phase === 'first_half_auction' || data.phase === 'second_half_auction') {
+        setAuctionPhaseTimeLeft(360);
       }
     });
 
@@ -193,6 +200,20 @@ function App() {
       socketService.off('time_extended');
     };
   }, []);
+
+  // Auction phase countdown timer
+  useEffect(() => {
+    if (phase !== 'first_half_auction' && phase !== 'second_half_auction') return;
+
+    const interval = setInterval(() => {
+      setAuctionPhaseTimeLeft((prev) => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const start = async () => {
     const response = await socketService.createRoom(nick || 'Oyuncu', maxPlayers, competition);
@@ -706,8 +727,19 @@ function App() {
           </div>
         </div>
         <div className="phase">
-          <span>{t.phase}</span>
-          <b>{phase.toUpperCase()}</b>
+          {(phase === 'first_half_auction' || phase === 'second_half_auction') ? (
+            <>
+              <span>{phase === 'first_half_auction' ? 'İLK YARI AÇIK ARTIRMA' : 'İKİNCİ YARI AÇIK ARTIRMA'}</span>
+              <b style={{ color: auctionPhaseTimeLeft < 60 ? '#f59e0b' : '#84cc16', fontSize: '1.2rem' }}>
+                {Math.floor(auctionPhaseTimeLeft / 60)}:{String(auctionPhaseTimeLeft % 60).padStart(2, '0')}
+              </b>
+            </>
+          ) : (
+            <>
+              <span>{t.phase}</span>
+              <b>{phase.toUpperCase()}</b>
+            </>
+          )}
         </div>
         <div className="language-toggle">
           <button
