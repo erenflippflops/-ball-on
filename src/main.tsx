@@ -1416,11 +1416,73 @@ function Trade(p: any) {
 }
 
 function Lineup(p: any) {
+  const myTeam = p.teams.find((t: Team) => t.id === socketService.getSocketId());
+  const sortedPlayers = myTeam ? [...myTeam.roster].sort((a, b) => b.baseOverall - a.baseOverall).slice(0, 11) : [];
+
+  const formations = [
+    { name: '4-3-3', positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'CM', 'CM', 'CM', 'LW', 'ST', 'RW'] },
+    { name: '4-4-2', positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'ST'] },
+    { name: '3-5-2', positions: ['GK', 'CB', 'CB', 'CB', 'LM', 'CM', 'CM', 'CM', 'RM', 'ST', 'ST'] },
+    { name: '4-2-3-1', positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'DM', 'DM', 'AM', 'LW', 'RW', 'ST'] },
+    { name: '3-4-3', positions: ['GK', 'CB', 'CB', 'CB', 'LM', 'CM', 'CM', 'RM', 'LW', 'ST', 'RW'] }
+  ];
+
   return (
     <Panel title="İlk 11 ve diziliş" subtitle="En iyi 11 oyuncun otomatik seçildi. Formasyon seç ve kaydet.">
-      <p style={{ textAlign: 'center', padding: '40px', color: '#9ab3a8' }}>
-        Lineup component - Coming soon
-      </p>
+      <div style={{ marginBottom: '30px' }}>
+        <label style={{ display: 'block', marginBottom: '15px', fontSize: '0.9rem', color: '#84cc16' }}>
+          Formasyon seç:
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '30px' }}>
+          {formations.map(f => (
+            <button
+              key={f.name}
+              onClick={() => p.setFormation(f.name)}
+              style={{
+                padding: '12px',
+                background: p.formation === f.name ? '#84cc16' : 'rgba(132, 204, 22, 0.1)',
+                border: '1px solid rgba(132, 204, 22, 0.3)',
+                borderRadius: '8px',
+                color: p.formation === f.name ? '#0F172A' : '#F1F5F9',
+                cursor: 'pointer',
+                fontWeight: p.formation === f.name ? 700 : 500,
+                fontSize: '0.9rem'
+              }}
+            >
+              {f.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '30px' }}>
+        <h3 style={{ fontSize: '1rem', marginBottom: '15px', color: '#84cc16' }}>İlk 11 (En iyi overall sırasına göre):</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+          {sortedPlayers.map((player, idx) => (
+            <div
+              key={player.id}
+              style={{
+                padding: '12px',
+                background: 'rgba(15, 23, 42, 0.8)',
+                border: '1px solid rgba(132, 204, 22, 0.3)',
+                borderRadius: '8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <div>
+                <span style={{ fontWeight: 600 }}>{idx + 1}. {player.name}</span>
+                <span style={{ marginLeft: '10px', color: '#84cc16', fontSize: '0.85rem' }}>
+                  {player.primaryPosition}
+                </span>
+              </div>
+              <span style={{ color: '#84cc16', fontWeight: 700 }}>{player.baseOverall}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <button className="primary" onClick={p.saveLineup}>
         Dizilişi kaydet →
       </button>
