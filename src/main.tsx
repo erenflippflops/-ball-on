@@ -7,6 +7,7 @@ import type { Player, Team, Room, Phase } from './types';
 import { translations, type Language } from './translations';
 import { HalftimeComponent } from './HalftimeComponent';
 import { TACTICS, isPlayerSuitableForTactic } from './tacticsSystem';
+import { MiniField } from './MiniField';
 
 function App() {
   const [phase, setPhase] = useState<Phase>('lobby');
@@ -1187,19 +1188,9 @@ function Game(p: any) {
         <h3>
           KADRO <span>{me.roster.length}/14</span>
         </h3>
-        <div className="roster">
-          {me.roster.map((x: Player) => (
-            <div className="roster-row" key={x.id}>
-              <span className={`mini ${x.primaryPosition}`}>{x.primaryPosition}</span>
-              <span>{x.name}</span>
-              <b>{x.baseOverall}</b>
-            </div>
-          ))}
-          {Array.from({ length: Math.max(0, 14 - me.roster.length) }).map((_, i) => (
-            <div className="empty" key={i}>
-              + boş slot
-            </div>
-          ))}
+        <MiniField roster={me.roster} formation={me.formation || p.chosenFormation || '4-3-3'} />
+        <div style={{ marginTop: '12px', fontSize: '10px', color: '#729187', textAlign: 'center' }}>
+          İlk 11 otomatik yerleştirildi
         </div>
       </aside>
       <div className="board">
@@ -1323,6 +1314,8 @@ function Game(p: any) {
 function Auction(p: any) {
   const x = p.current as Player;
   const t = translations[p.language as Language];
+  const myTeam = p.teams.find((team: Team) => team.id === socketService.getSocketId());
+  const isSuitableForTactic = myTeam?.chosenTactic ? isPlayerSuitableForTactic(x, myTeam.chosenTactic) : false;
 
   if (!x) {
     return (
@@ -1356,12 +1349,58 @@ function Auction(p: any) {
         <div className={`player-art`}>
           <span>{x.primaryPosition}</span>
           <strong>{x.baseOverall}</strong>
+          {isSuitableForTactic && (
+            <div style={{
+              position: 'absolute',
+              top: '-5px',
+              right: '-5px',
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px',
+              boxShadow: '0 0 10px rgba(251, 191, 36, 0.6)',
+              animation: 'pulse 2s infinite'
+            }}>
+              ⭐
+            </div>
+          )}
         </div>
         <div className="player-info">
-          <h1>{x.name}</h1>
+          <h1>
+            {x.name}
+            {isSuitableForTactic && (
+              <span style={{
+                marginLeft: '8px',
+                fontSize: '14px',
+                color: '#fbbf24',
+                fontWeight: 600
+              }}>
+                ⭐
+              </span>
+            )}
+          </h1>
           <p>
             {t.positions[x.primaryPosition]} · {x.age} {t.years} · {x.archetype}
           </p>
+          {isSuitableForTactic && (
+            <div style={{
+              marginTop: '8px',
+              padding: '6px 10px',
+              background: 'rgba(251, 191, 36, 0.15)',
+              border: '1px solid rgba(251, 191, 36, 0.4)',
+              borderRadius: '6px',
+              fontSize: '11px',
+              color: '#fbbf24',
+              fontWeight: 600,
+              textAlign: 'center'
+            }}>
+              ⭐ Taktiğine uygun oyuncu!
+            </div>
+          )}
           <div className="tier">
             {x.marketTier.toUpperCase()}
             <small>{t.quality}</small>
