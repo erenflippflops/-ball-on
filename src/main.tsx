@@ -350,8 +350,12 @@ function App() {
 
   const handleFinishHalftime = async () => {
     if (!roomId) return;
-    // TODO: Implement finish halftime socket event
-    showNotification(language === 'tr' ? 'İkinci yarıya geçiliyor...' : 'Proceeding to second half...', 'info');
+    const result = await socketService.finishHalftime(roomId);
+    if (result.success) {
+      showNotification(language === 'tr' ? 'İkinci yarı açık artırmaya geçiliyor...' : 'Proceeding to second half auction...', 'info');
+    } else {
+      showNotification(result.error || 'Failed to finish halftime', 'error');
+    }
   };
 
   // Admin functions
@@ -1197,7 +1201,7 @@ function Game(p: any) {
       </aside>
       <div className="board">
         <div className="notice">{p.message}</div>
-        {p.phase === 'auction' && <Auction {...p} />}
+        {(p.phase === 'first_half_auction' || p.phase === 'second_half_auction') && <Auction {...p} />}
         {p.phase === 'steal' && <Steal {...p} />}
         {p.phase === 'trade' && <Trade {...p} />}
         {p.phase === 'match' && <Match />}
@@ -1214,7 +1218,6 @@ function Game(p: any) {
             incomingOffers={p.halftimeOffers}
           />
         )}
-        {p.phase === 'second_half' && <Match />}
         {p.phase === 'result' && <Result result={p.matchResult} />}
       </div>
       <aside className="rightbar">
@@ -1333,7 +1336,9 @@ function Auction(p: any) {
   return (
     <div className="auction">
       <div className="auction-top">
-        <span className="kicker">AÇIK ARTIRMA · {p.me.roster.length + 1}. TUR</span>
+        <span className="kicker">
+          {p.phase === 'first_half_auction' ? 'İLK YARI AÇIK ARTIRMA' : 'İKİNCİ YARI AÇIK ARTIRMA'} · {p.me.roster.length + 1}. TUR
+        </span>
         <CircularTimer timeLeft={p.auctionTimer} total={30} />
       </div>
       {p.highestBid > 0 && (

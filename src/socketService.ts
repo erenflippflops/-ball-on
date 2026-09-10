@@ -124,6 +124,14 @@ class SocketService {
     });
   }
 
+  finishHalftime(roomId: string): Promise<{ success: boolean; error?: string }> {
+    return new Promise((resolve) => {
+      this.socket?.emit('finish_halftime', { roomId }, (response: any) => {
+        resolve(response);
+      });
+    });
+  }
+
   onRoomUpdated(callback: (room: Room) => void) {
     this.socket?.on('room_updated', callback);
   }

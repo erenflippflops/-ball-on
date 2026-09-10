@@ -51,7 +51,7 @@ export interface Team {
   chosenTactic?: string; // Pre-auction tactic selection (locked for entire game)
 }
 
-export type Phase = 'lobby' | 'tactic_selection' | 'auction' | 'completion' | 'steal' | 'trade' | 'match' | 'halftime' | 'second_half' | 'result';
+export type Phase = 'lobby' | 'tactic_selection' | 'first_half_auction' | 'halftime' | 'second_half_auction' | 'completion' | 'steal' | 'trade' | 'match' | 'result';
 
 export interface Room {
   id: string;

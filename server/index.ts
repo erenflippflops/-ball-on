@@ -165,7 +165,17 @@ function finalizeAuction(roomId: string, io: Server) {
   // Move to next player
   room.currentPlayerIndex++;
 
-  // Check if all players have roster of 14
+  // Check for halftime after ~7 players (first half auction complete)
+  if (room.phase === 'first_half_auction' && room.currentPlayerIndex >= 7) {
+    // Move to halftime transfer window
+    room.phase = 'halftime';
+    room.halftimeTimer = 90; // 90 seconds for transfers
+    io.to(roomId).emit('phase_changed', { phase: 'halftime' });
+    io.to(roomId).emit('room_updated', room);
+    return;
+  }
+
+  // Check if all players have roster of 14 (second half complete)
   const allComplete = room.teams.every(t => t.roster.length >= 14);
 
   if (allComplete) {
@@ -421,8 +431,8 @@ io.on('connection', (socket) => {
       const allSelected = currentRoom.teams.every(t => t.chosenTactic);
 
       if (allSelected) {
-        // Move to auction phase
-        currentRoom.phase = 'auction';
+        // Move to first half auction phase
+        currentRoom.phase = 'first_half_auction';
         currentRoom.currentPlayerIndex = 0;
 
         // Initialize auction state
@@ -455,7 +465,7 @@ io.on('connection', (socket) => {
         // Start auction timer
         startAuctionTimer(roomId, io);
 
-        io.to(roomId).emit('phase_changed', { phase: 'auction', currentPlayer: currentRoom.auctionPool[0] });
+        io.to(roomId).emit('phase_changed', { phase: 'first_half_auction', currentPlayer: currentRoom.auctionPool[0] });
         io.to(roomId).emit('market_gossip', {
           message: `📰 Transfer dedikoduları: ${leakCount} yıldız oyuncu havuzda olacak!`,
           stars: currentRoom.upcomingStars.map(id => currentRoom.auctionPool.find(p => p.id === id)?.name).filter(Boolean)
@@ -827,6 +837,43 @@ io.on('connection', (socket) => {
 
   // Save tactics - deprecated, kept for compatibility
   socket.on('save_tactics', ({ roomId, tactic }, callback) => {
+    callback({ success: true });
+  });
+
+  // Finish halftime and move to second half auction
+  socket.on('finish_halftime', ({ roomId }, callback) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      callback({ success: false, error: 'Oda bulunamadı' });
+      return;
+    }
+
+    if (room.phase !== 'halftime') {
+      callback({ success: false, error: 'Halftime değil' });
+      return;
+    }
+
+    // Move to second half auction
+    room.phase = 'second_half_auction';
+    room.halftimeOffers = [];
+
+    // Start second half auction from where we left off
+    const nextPlayer = room.auctionPool[room.currentPlayerIndex];
+    if (nextPlayer) {
+      room.auctionState = {
+        currentBids: {},
+        highestBidder: null,
+        highestBid: 0,
+        timeLeft: 14,
+        timerStarted: Date.now(),
+        skippedPlayers: []
+      };
+
+      startAuctionTimer(roomId, io);
+      io.to(roomId).emit('phase_changed', { phase: 'second_half_auction', currentPlayer: nextPlayer });
+      io.to(roomId).emit('room_updated', room);
+    }
+
     callback({ success: true });
   });
 
