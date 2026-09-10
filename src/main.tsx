@@ -58,6 +58,9 @@ function App() {
   // Auction phase timer (6 minutes = 360 seconds)
   const [auctionPhaseTimeLeft, setAuctionPhaseTimeLeft] = useState<number>(360);
 
+  // Lineup state for drag & drop
+  const [myLineup, setMyLineup] = useState<Record<string, string>>({});
+
   const t = translations[language];
   const me = teams.find(t => t.id === socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
   const opponent = teams.find(t => t.id !== socketService.getSocketId()) || { id: '', name: '', budget: 100, roster: [], ready: false, scouts: 3, buff: 0 };
@@ -164,6 +167,10 @@ function App() {
       setAuctionTimer(data.timeLeft);
     });
 
+    socketService.on('halftime_timer', (data) => {
+      setHalftimeTimer(data.timeLeft);
+    });
+
     socketService.on('bid_placed', (data) => {
       setHighestBid(data.highestBid);
       setHighestBidder(data.highestBidder);
@@ -199,6 +206,7 @@ function App() {
       socketService.off('market_shift');
       socketService.off('player_joined');
       socketService.off('auction_timer');
+      socketService.off('halftime_timer');
       socketService.off('bid_placed');
       socketService.off('player_skipped');
       socketService.off('time_extended');
@@ -665,7 +673,7 @@ function App() {
               <div key={team.id} style={{ marginBottom: '15px', padding: '12px', background: 'rgba(15, 23, 42, 0.8)', borderRadius: '8px', border: '1px solid rgba(132, 204, 22, 0.2)' }}>
                 <div style={{ fontWeight: 700, marginBottom: '8px', color: '#84cc16', fontSize: '0.9rem' }}>{team.name}</div>
                 <div style={{ fontSize: '0.75rem', marginBottom: '10px', color: '#94a3b8' }}>
-                  Budget: <strong>{team.budget} CR</strong> | Roster: <strong>{team.roster.length}/14</strong>
+                  Budget: <strong>{team.budget} CR</strong> | Roster: <strong>{team.roster.length}/11</strong>
                 </div>
                 <div style={{ display: 'flex', gap: '5px', marginBottom: '8px' }}>
                   <button
@@ -683,8 +691,8 @@ function App() {
                 </div>
                 <button
                   onClick={() => adminFillRoster(team.id)}
-                  disabled={team.roster.length >= 14}
-                  style={{ width: '100%', padding: '8px', background: team.roster.length >= 14 ? 'rgba(100, 100, 100, 0.2)' : 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '4px', color: team.roster.length >= 14 ? '#666' : '#3b82f6', cursor: team.roster.length >= 14 ? 'not-allowed' : 'pointer', fontSize: '0.75rem', fontWeight: 600, marginBottom: '8px' }}
+                  disabled={team.roster.length >= 11}
+                  style={{ width: '100%', padding: '8px', background: team.roster.length >= 11 ? 'rgba(100, 100, 100, 0.2)' : 'rgba(59, 130, 246, 0.2)', border: '1px solid rgba(59, 130, 246, 0.4)', borderRadius: '4px', color: team.roster.length >= 11 ? '#666' : '#3b82f6', cursor: team.roster.length >= 11 ? 'not-allowed' : 'pointer', fontSize: '0.75rem', fontWeight: 600, marginBottom: '8px' }}
                 >
                   Fill Roster ({14 - team.roster.length} more)
                 </button>
@@ -885,6 +893,8 @@ function App() {
             onBuyFromMarketplace={handleBuyFromMarketplace}
             chosenTactic={chosenTactic}
             chosenFormation={chosenFormation}
+            myLineup={myLineup}
+            setMyLineup={setMyLineup}
           />
         )}
       </main>
@@ -1190,7 +1200,17 @@ function Game(p: any) {
     ATT: me.roster.filter((p: Player) => getPositionCategory(p.primaryPosition) === 'ATT').length
   };
 
-  const positionLimits = { GK: 2, DEF: 5, MID: 5, ATT: 4 };
+  // Get formation-based position limits
+  const getFormationLimits = (formation: string) => {
+    const parts = formation.split('-').map(n => parseInt(n));
+    if (parts.length === 3) {
+      const [def, mid, att] = parts;
+      return { GK: 1, DEF: def, MID: mid, ATT: att };
+    }
+    return { GK: 1, DEF: 4, MID: 3, ATT: 3 }; // Default 4-3-3
+  };
+
+  const positionLimits = getFormationLimits(me.formation || p.chosenFormation || '4-3-3');
 
   return (
     <section className="game">
@@ -1244,11 +1264,17 @@ function Game(p: any) {
           </div>
         </div>
         <h3>
-          KADRO <span>{me.roster.length}/14</span>
+          KADRO <span>{me.roster.length}/11</span>
         </h3>
-        <MiniField roster={me.roster} formation={me.formation || p.chosenFormation || '4-3-3'} />
+        <MiniField
+          roster={me.roster}
+          formation={me.formation || p.chosenFormation || '4-3-3'}
+          lineup={p.myLineup}
+          onLineupChange={p.setMyLineup}
+          editable={true}
+        />
         <div style={{ marginTop: '12px', fontSize: '10px', color: '#729187', textAlign: 'center' }}>
-          İlk 11 otomatik yerleştirildi
+          Oyuncuları sürükleyip bırakarak düzenleyebilirsiniz
         </div>
       </aside>
       <div className="board">
@@ -1325,9 +1351,9 @@ function Game(p: any) {
         <div className="objective">
           <b>💰 Tutumlu Menajer</b>
           <span>Kadroyu en az 10 CR ile tamamla</span>
-          <progress value={me.roster.length >= 14 ? me.budget : 0} max="10" />
+          <progress value={me.roster.length >= 11 ? me.budget : 0} max="10" />
           <small style={{ fontSize: '10px', color: '#9ab3a8', marginTop: '4px', display: 'block' }}>
-            {me.roster.length >= 14 ? `${me.budget}/10 CR kaldı` : 'Önce kadroyu tamamla'}
+            {me.roster.length >= 11 ? `${me.budget}/10 CR kaldı` : 'Önce kadroyu tamamla'}
           </small>
         </div>
         <div className="objective">

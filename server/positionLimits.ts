@@ -1,11 +1,30 @@
 import type { Player, Team } from '../src/types';
 
-// Position limits for squad building
+// Get position limits based on formation (11 players total)
+export function getFormationLimits(formation: string): { GK: number; DEF: number; MID: number; ATT: number } {
+  // Parse formation (e.g., "4-3-3" -> [4, 3, 3])
+  const parts = formation.split('-').map(n => parseInt(n));
+
+  if (parts.length === 3) {
+    const [def, mid, att] = parts;
+    return {
+      GK: 1,
+      DEF: def,
+      MID: mid,
+      ATT: att
+    };
+  }
+
+  // Default to 4-3-3 if parsing fails
+  return { GK: 1, DEF: 4, MID: 3, ATT: 3 };
+}
+
+// Position limits for squad building (default)
 export const POSITION_LIMITS = {
-  GK: 2,
-  DEF: 5, // CB, LB, RB, LWB, RWB combined
-  MID: 5, // DM, CM, AM, LM, RM combined
-  ATT: 4  // LW, RW, ST combined
+  GK: 1,
+  DEF: 4,
+  MID: 3,
+  ATT: 3
 };
 
 export function getPositionCategory(position: string): 'GK' | 'DEF' | 'MID' | 'ATT' {
@@ -16,17 +35,20 @@ export function getPositionCategory(position: string): 'GK' | 'DEF' | 'MID' | 'A
   return 'MID'; // Default
 }
 
-export function canAddPlayer(team: Team, player: Player): { allowed: boolean; reason?: string } {
-  // Check if roster is full
-  if (team.roster.length >= 14) {
-    return { allowed: false, reason: 'Kadro dolu (14/14)' };
+export function canAddPlayer(team: Team, player: Player, formation?: string): { allowed: boolean; reason?: string } {
+  // Get formation limits (use team's chosen formation or default)
+  const limits = formation ? getFormationLimits(formation) : getFormationLimits(team.chosenTactic || '4-3-3');
+
+  // Check if roster is full (11 players)
+  if (team.roster.length >= 11) {
+    return { allowed: false, reason: 'Kadro dolu (11/11)' };
   }
 
   // Check position limits
   const category = getPositionCategory(player.primaryPosition);
   const categoryCount = team.roster.filter(p => getPositionCategory(p.primaryPosition) === category).length;
 
-  const limit = POSITION_LIMITS[category];
+  const limit = limits[category];
   if (categoryCount >= limit) {
     return {
       allowed: false,

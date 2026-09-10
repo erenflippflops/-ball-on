@@ -29,6 +29,8 @@ const io = new Server(httpServer, {
 // In-memory room storage
 const rooms = new Map<string, Room>();
 const auctionTimers = new Map<string, NodeJS.Timeout>();
+const halftimeTimers = new Map<string, NodeJS.Timeout>();
+const auctionPhaseTimers = new Map<string, NodeJS.Timeout>(); // 6-minute auction phase timers
 
 // Auction timer function
 function startAuctionTimer(roomId: string, io: Server) {
@@ -67,6 +69,122 @@ function startAuctionTimer(roomId: string, io: Server) {
   auctionTimers.set(roomId, timer);
 }
 
+// Halftime timer function
+function startHalftimeTimer(roomId: string, io: Server) {
+  // Clear existing timer if any
+  const existingTimer = halftimeTimers.get(roomId);
+  if (existingTimer) {
+    clearInterval(existingTimer);
+  }
+
+  const room = rooms.get(roomId);
+  if (!room || room.phase !== 'halftime') return;
+
+  // Emit timer updates every second
+  const timer = setInterval(() => {
+    const room = rooms.get(roomId);
+    if (!room || room.phase !== 'halftime') {
+      clearInterval(timer);
+      halftimeTimers.delete(roomId);
+      return;
+    }
+
+    room.halftimeTimer = Math.max(0, (room.halftimeTimer || 0) - 1);
+
+    // Emit timer update
+    io.to(roomId).emit('halftime_timer', { timeLeft: room.halftimeTimer });
+    io.to(roomId).emit('room_updated', room);
+
+    // Timer finished - move to second half auction
+    if (room.halftimeTimer <= 0) {
+      clearInterval(timer);
+      halftimeTimers.delete(roomId);
+
+      // Transition to second half auction
+      room.phase = 'second_half_auction';
+      io.to(roomId).emit('phase_changed', { phase: 'second_half_auction' });
+      io.to(roomId).emit('room_updated', room);
+
+      // Start auction phase timer for second half (6 minutes)
+      startAuctionPhaseTimer(roomId, io);
+
+      // Start next auction
+      const nextPlayer = room.auctionPool[room.currentPlayerIndex];
+      if (nextPlayer) {
+        room.auctionState = {
+          currentBids: {},
+          highestBidder: null,
+          highestBid: 0,
+          timeLeft: 14,
+          timerStarted: Date.now(),
+          skippedPlayers: []
+        };
+        startAuctionTimer(roomId, io);
+        io.to(roomId).emit('next_player', { player: nextPlayer });
+        io.to(roomId).emit('room_updated', room);
+      }
+    }
+  }, 1000);
+
+  halftimeTimers.set(roomId, timer);
+}
+
+// Auction phase timer function (6 minutes for each half)
+function startAuctionPhaseTimer(roomId: string, io: Server) {
+  // Clear existing timer if any
+  const existingTimer = auctionPhaseTimers.get(roomId);
+  if (existingTimer) {
+    clearInterval(existingTimer);
+  }
+
+  const room = rooms.get(roomId);
+  if (!room || (room.phase !== 'first_half_auction' && room.phase !== 'second_half_auction')) return;
+
+  let timeLeft = 360; // 6 minutes = 360 seconds
+
+  const timer = setInterval(() => {
+    const room = rooms.get(roomId);
+    if (!room || (room.phase !== 'first_half_auction' && room.phase !== 'second_half_auction')) {
+      clearInterval(timer);
+      auctionPhaseTimers.delete(roomId);
+      return;
+    }
+
+    timeLeft--;
+
+    // When time reaches 0, move to next phase
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      auctionPhaseTimers.delete(roomId);
+
+      // Clear current auction timer
+      const auctionTimer = auctionTimers.get(roomId);
+      if (auctionTimer) {
+        clearInterval(auctionTimer);
+        auctionTimers.delete(roomId);
+      }
+
+      if (room.phase === 'first_half_auction') {
+        // Move to halftime
+        room.phase = 'halftime';
+        room.halftimeTimer = 90;
+        room.marketplace = [];
+        room.halftimeOffers = [];
+        startHalftimeTimer(roomId, io);
+        io.to(roomId).emit('phase_changed', { phase: 'halftime' });
+        io.to(roomId).emit('room_updated', room);
+      } else if (room.phase === 'second_half_auction') {
+        // Move to steal phase
+        room.phase = 'steal';
+        io.to(roomId).emit('phase_changed', { phase: 'steal' });
+        io.to(roomId).emit('room_updated', room);
+      }
+    }
+  }, 1000);
+
+  auctionPhaseTimers.set(roomId, timer);
+}
+
 // Finalize auction - award player to highest bidder
 function finalizeAuction(roomId: string, io: Server) {
   const room = rooms.get(roomId);
@@ -85,6 +203,12 @@ function finalizeAuction(roomId: string, io: Server) {
   if (room.auctionState.highestBidder) {
     const winnerTeam = room.teams.find(t => t.id === room.auctionState!.highestBidder);
     if (winnerTeam) {
+      // Check if player already exists in roster (prevent duplication bug)
+      if (winnerTeam.roster.some(p => p.id === currentPlayer.id)) {
+        console.error(`Duplication prevented: ${currentPlayer.name} already in ${winnerTeam.name} roster`);
+        return;
+      }
+
       winnerTeam.budget -= room.auctionState.highestBid;
       winnerTeam.roster.push(currentPlayer);
 
@@ -118,13 +242,20 @@ function finalizeAuction(roomId: string, io: Server) {
   } else {
     // No bids - assign to random team for free
     const eligibleTeams = room.teams.filter(t => {
-      if (t.roster.length >= 14) return false;
+      if (t.roster.length >= 11) return false;
       const positionCheck = canAddPlayer(t, currentPlayer);
       return positionCheck.allowed;
     });
 
     if (eligibleTeams.length > 0) {
       const randomTeam = eligibleTeams[Math.floor(Math.random() * eligibleTeams.length)];
+
+      // Check if player already exists in roster (prevent duplication bug)
+      if (randomTeam.roster.some(p => p.id === currentPlayer.id)) {
+        console.error(`Duplication prevented: ${currentPlayer.name} already in ${randomTeam.name} roster`);
+        return;
+      }
+
       randomTeam.roster.push(currentPlayer);
 
       // Apply joker bonus even for free transfers
@@ -165,49 +296,59 @@ function finalizeAuction(roomId: string, io: Server) {
   // Move to next player
   room.currentPlayerIndex++;
 
-  // Check for halftime after ~7 players (first half auction complete)
-  if (room.phase === 'first_half_auction' && room.currentPlayerIndex >= 7) {
+  // Check for halftime after ~6 players (first half auction complete - half of 11)
+  if (room.phase === 'first_half_auction' && room.currentPlayerIndex >= 6) {
+    // Clear auction phase timer
+    const phaseTimer = auctionPhaseTimers.get(roomId);
+    if (phaseTimer) {
+      clearInterval(phaseTimer);
+      auctionPhaseTimers.delete(roomId);
+    }
+
     // Move to halftime transfer window
     room.phase = 'halftime';
     room.halftimeTimer = 90; // 90 seconds for transfers
     room.marketplace = []; // Initialize empty marketplace
     room.halftimeOffers = [];
+    startHalftimeTimer(roomId, io); // Start halftime countdown
     io.to(roomId).emit('phase_changed', { phase: 'halftime' });
     io.to(roomId).emit('room_updated', room);
     return;
   }
 
-  // Check if all players have roster of 14 (second half complete)
-  const allComplete = room.teams.every(t => t.roster.length >= 14);
+  // Check if all players have roster of 11 (second half complete)
+  const allComplete = room.teams.every(t => t.roster.length >= 11);
 
   if (allComplete) {
     // Move to steal phase
     room.phase = 'steal';
     io.to(roomId).emit('phase_changed', { phase: 'steal' });
+    io.to(roomId).emit('room_updated', room);
   } else {
-    // Start next auction
-    const nextPlayer = room.auctionPool[room.currentPlayerIndex];
-    if (nextPlayer) {
-      room.auctionState = {
-        currentBids: {},
-        highestBidder: null,
-        highestBid: 0,
-        timeLeft: 14,
-        timerStarted: Date.now(),
-        skippedPlayers: []
-      };
+    // Only start next auction if NOT in halftime
+    if (room.phase !== 'halftime') {
+      const nextPlayer = room.auctionPool[room.currentPlayerIndex];
+      if (nextPlayer) {
+        room.auctionState = {
+          currentBids: {},
+          highestBidder: null,
+          highestBid: 0,
+          timeLeft: 14,
+          timerStarted: Date.now(),
+          skippedPlayers: []
+        };
 
-      // Bot auto-bid logic
-      const botTeams = room.teams.filter(t => t.id.startsWith('bot'));
-      botTeams.forEach(botTeam => {
-        if (botTeam.roster.length < 14) {
+        // Bot auto-bid logic
+        const botTeams = room.teams.filter(t => t.id.startsWith('bot'));
+        botTeams.forEach(botTeam => {
+        if (botTeam.roster.length < 11) {
           const botAI = new BotAI(botTeam);
           const positionCheck = canAddPlayer(botTeam, nextPlayer);
 
           if (botAI.shouldBid(nextPlayer) && positionCheck.allowed) {
             setTimeout(() => {
               const botBid = botAI.calculateBid(nextPlayer);
-              const slotsRemaining = 14 - botTeam.roster.length;
+              const slotsRemaining = 11 - botTeam.roster.length;
 
               if (botBid <= botTeam.budget - (slotsRemaining - 1)) {
                 const room = rooms.get(roomId);
@@ -258,10 +399,11 @@ function finalizeAuction(roomId: string, io: Server) {
       io.to(roomId).emit('next_player', { player: nextPlayer });
       startAuctionTimer(roomId, io);
     }
+    }
   }
 
-  // Market dynamics check
-  if (room.currentPlayerIndex % 8 === 0 && Math.random() < 0.4) {
+  // Market dynamics check (only if not in halftime)
+  if (room.phase !== 'halftime' && room.currentPlayerIndex % 8 === 0 && Math.random() < 0.4) {
     const trends = ['boom', 'crash', 'stable'] as const;
     const oldTrend = room.marketTrend || 'stable';
     room.marketTrend = trends[Math.floor(Math.random() * trends.length)];
@@ -467,6 +609,9 @@ io.on('connection', (socket) => {
         // Start auction timer
         startAuctionTimer(roomId, io);
 
+        // Start auction phase timer (6 minutes)
+        startAuctionPhaseTimer(roomId, io);
+
         io.to(roomId).emit('phase_changed', { phase: 'first_half_auction', currentPlayer: currentRoom.auctionPool[0] });
         io.to(roomId).emit('market_gossip', {
           message: `📰 Transfer dedikoduları: ${leakCount} yıldız oyuncu havuzda olacak!`,
@@ -503,7 +648,7 @@ io.on('connection', (socket) => {
     }
 
     // Check budget reserve
-    const slotsRemaining = 14 - playerTeam.roster.length;
+    const slotsRemaining = 11 - playerTeam.roster.length;
     if (amount > playerTeam.budget - (slotsRemaining - 1)) {
       callback({ success: false, error: 'Bu teklif kadro rezervini ihlal ediyor' });
       return;
@@ -855,9 +1000,19 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Clear halftime timer
+    const timer = halftimeTimers.get(roomId);
+    if (timer) {
+      clearInterval(timer);
+      halftimeTimers.delete(roomId);
+    }
+
     // Move to second half auction
     room.phase = 'second_half_auction';
     room.halftimeOffers = [];
+
+    // Start auction phase timer for second half (6 minutes)
+    startAuctionPhaseTimer(roomId, io);
 
     // Start second half auction from where we left off
     const nextPlayer = room.auctionPool[room.currentPlayerIndex];
@@ -962,7 +1117,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (buyerTeam.roster.length >= 14) {
+    if (buyerTeam.roster.length >= 11) {
       callback({ success: false, error: 'Kadro dolu' });
       return;
     }
@@ -1199,7 +1354,7 @@ app.post('/admin/room/:roomId/fill-roster', (req, res) => {
     return res.status(404).json({ error: 'Team not found' });
   }
 
-  const playersToAdd = count || (14 - team.roster.length);
+  const playersToAdd = count || (11 - team.roster.length);
   const availablePlayers = room.auctionPool.filter(p => !team.roster.find(r => r.id === p.id));
 
   for (let i = 0; i < playersToAdd && i < availablePlayers.length; i++) {

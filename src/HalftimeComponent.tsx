@@ -185,12 +185,12 @@ export function HalftimeComponent(props: HalftimeProps) {
                     <button
                       className="primary"
                       onClick={() => props.onBuyFromMarketplace(listing.player.id)}
-                      disabled={props.me.budget < listing.price || props.me.roster.length >= 14}
+                      disabled={props.me.budget < listing.price || props.me.roster.length >= 11}
                       style={{ width: '100%', padding: '8px', fontSize: '14px' }}
                     >
                       {props.me.budget < listing.price
                         ? (props.language === 'tr' ? 'Yetersiz Bütçe' : 'Insufficient Budget')
-                        : props.me.roster.length >= 14
+                        : props.me.roster.length >= 11
                         ? (props.language === 'tr' ? 'Kadro Dolu' : 'Squad Full')
                         : (props.language === 'tr' ? '💰 Satın Al' : '💰 Buy Now')
                       }

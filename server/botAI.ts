@@ -8,7 +8,7 @@ export class BotAI {
   constructor(team: Team) {
     this.team = team;
     this.budget = team.budget;
-    this.slotsRemaining = 14 - team.roster.length;
+    this.slotsRemaining = 11 - team.roster.length;
   }
 
   // Decide if bot should bid on a player
