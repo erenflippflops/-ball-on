@@ -66,7 +66,6 @@ export function HalftimeComponent(props: HalftimeProps) {
           <select
             value={selectedPlayerToSell}
             onChange={(e) => setSelectedPlayerToSell(e.target.value)}
-            style={{ width: '100%', padding: '10px', marginBottom: '10px', background: 'rgba(10, 26, 28, 0.6)', border: '1px solid rgba(132, 204, 22, 0.3)', borderRadius: '6px', color: '#f1f5f9' }}
           >
             <option value="">{t.selectPlayer}</option>
             {props.me.roster.map(player => (
@@ -76,18 +75,15 @@ export function HalftimeComponent(props: HalftimeProps) {
             ))}
           </select>
 
-          <div style={{ marginBottom: '10px' }}>
-            <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '5px' }}>
-              {t.sellPrice}
-            </label>
-            <input
-              type="number"
-              min="1"
-              value={sellPrice}
-              onChange={(e) => setSellPrice(Number(e.target.value))}
-              style={{ width: '100%', padding: '10px', background: 'rgba(10, 26, 28, 0.6)', border: '1px solid rgba(132, 204, 22, 0.3)', borderRadius: '6px', color: '#f1f5f9' }}
-            />
-          </div>
+          <label>
+            {t.sellPrice}
+          </label>
+          <input
+            type="number"
+            min="1"
+            value={sellPrice}
+            onChange={(e) => setSellPrice(Number(e.target.value))}
+          />
 
           <button
             className="primary"
@@ -167,35 +163,35 @@ export function HalftimeComponent(props: HalftimeProps) {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '400px', overflowY: 'auto' }}>
               {props.marketplace.map((listing, idx) => (
-                <div key={idx} style={{ padding: '15px', background: 'rgba(10, 26, 28, 0.6)', borderRadius: '8px', border: '1px solid rgba(132, 204, 22, 0.2)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <div>
-                      <strong style={{ fontSize: '16px' }}>{listing.player.name}</strong>
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                        <span style={{ color: '#84cc16', fontSize: '12px', fontWeight: 600 }}>{listing.player.primaryPosition}</span>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>OVR {listing.player.baseOverall}</span>
-                      </div>
+                <div key={idx} className="marketplace-item">
+                  <div className="marketplace-item-info">
+                    <div className="marketplace-item-name">{listing.player.name}</div>
+                    <div className="marketplace-item-details">
+                      <span style={{ color: '#84cc16', fontWeight: 600, marginRight: '8px' }}>
+                        {listing.player.primaryPosition}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>OVR {listing.player.baseOverall}</span>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#b8ed61' }}>{listing.price} CR</div>
-                      <small style={{ color: '#94a3b8', fontSize: '10px' }}>{listing.sellerName}</small>
-                    </div>
+                    <small style={{ color: '#94a3b8', fontSize: '0.625rem' }}>{listing.sellerName}</small>
                   </div>
-                  {listing.sellerId !== props.me.id && (
-                    <button
-                      className="primary"
-                      onClick={() => props.onBuyFromMarketplace(listing.player.id)}
-                      disabled={props.me.budget < listing.price || props.me.roster.length >= 11}
-                      style={{ width: '100%', padding: '8px', fontSize: '14px' }}
-                    >
-                      {props.me.budget < listing.price
-                        ? (props.language === 'tr' ? 'Yetersiz Bütçe' : 'Insufficient Budget')
-                        : props.me.roster.length >= 11
-                        ? (props.language === 'tr' ? 'Kadro Dolu' : 'Squad Full')
-                        : (props.language === 'tr' ? '💰 Satın Al' : '💰 Buy Now')
-                      }
-                    </button>
-                  )}
+                  <div className="marketplace-item-price">
+                    <strong>{listing.price} <small>CR</small></strong>
+                    {listing.sellerId !== props.me.id && (
+                      <button
+                        className="primary"
+                        onClick={() => props.onBuyFromMarketplace(listing.player.id)}
+                        disabled={props.me.budget < listing.price || props.me.roster.length >= 11}
+                        style={{ padding: '6px 12px', fontSize: '0.75rem', marginTop: '8px' }}
+                      >
+                        {props.me.budget < listing.price
+                          ? (props.language === 'tr' ? 'Yetersiz Bütçe' : 'Insufficient Budget')
+                          : props.me.roster.length >= 11
+                          ? (props.language === 'tr' ? 'Kadro Dolu' : 'Squad Full')
+                          : (props.language === 'tr' ? '💰 Satın Al' : '💰 Buy Now')
+                        }
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

@@ -169,7 +169,12 @@ export function MiniField({ roster, formation, lineup, onLineupChange, editable 
 
     // Check if player can play in this position
     if (!canPlayInPosition(player.primaryPosition, player.secondaryPositions, targetPosition)) {
-      alert(`${player.name} bu pozisyonda oynayamaz! (${player.primaryPosition} → ${targetPosition})`);
+      // Show error feedback instead of alert
+      const slotElement = document.querySelector(`[data-slot="${targetSlot}"]`);
+      if (slotElement) {
+        slotElement.classList.add('drop-error');
+        setTimeout(() => slotElement.classList.remove('drop-error'), 500);
+      }
       setDraggedPlayer(null);
       setDraggedFrom(null);
       return;
@@ -263,6 +268,7 @@ export function MiniField({ roster, formation, lineup, onLineupChange, editable 
           return (
             <div
               key={idx}
+              data-slot={slotKey}
               style={{
                 position: 'absolute',
                 left: `${slot.x}%`,
@@ -382,6 +388,7 @@ export function MiniField({ roster, formation, lineup, onLineupChange, editable 
             {benchPlayers.map(player => (
               <div
                 key={player.id}
+                className="bench-player"
                 draggable
                 onDragStart={() => handleDragStart(player.id, 'bench')}
                 style={{

@@ -58,6 +58,10 @@ function App() {
   // Auction phase timer (6 minutes = 360 seconds)
   const [auctionPhaseTimeLeft, setAuctionPhaseTimeLeft] = useState<number>(360);
 
+  // Loading states
+  const [isBidding, setIsBidding] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+
   // Lineup state for drag & drop
   const [myLineup, setMyLineup] = useState<Record<string, string>>({});
 
@@ -215,7 +219,12 @@ function App() {
 
   // Auction phase countdown timer
   useEffect(() => {
-    if (phase !== 'first_half_auction' && phase !== 'second_half_auction') return;
+    if (phase !== 'first_half_auction' && phase !== 'second_half_auction') {
+      return;
+    }
+
+    // Reset timer when phase changes to auction
+    setAuctionPhaseTimeLeft(360);
 
     const interval = setInterval(() => {
       setAuctionPhaseTimeLeft((prev) => {
@@ -241,8 +250,12 @@ function App() {
   };
 
   const join = async () => {
-    if (!room) return;
+    if (!room || isJoining) return;
+
+    setIsJoining(true);
     const response = await socketService.joinRoom(room, nick || 'Oyuncu');
+    setIsJoining(false);
+
     if (response.success && response.room) {
       setRoomId(room);
       setTeams(response.room.teams);
@@ -267,18 +280,23 @@ function App() {
   };
 
   const buy = async (amount: number) => {
-    if (!current || !roomId) return;
-    if (amount > me.budget - (14 - me.roster.length)) {
+    if (!current || !roomId || isBidding) return;
+    if (amount > me.budget - (11 - me.roster.length)) {
       const msg = 'Bu teklif kadro rezervini ihlal ediyor.';
       setMessage(msg);
       showNotification(msg, 'error');
       return;
     }
 
+    setIsBidding(true);
     const response = await socketService.placeBid(roomId, amount);
+    setIsBidding(false);
+
     if (!response.success) {
       setMessage(response.error || 'Teklif başarısız');
       showNotification(response.error || 'Teklif başarısız', 'error');
+    } else {
+      showNotification('Teklif verildi! 🎯', 'success');
     }
   };
 
@@ -894,6 +912,7 @@ function App() {
             chosenTactic={chosenTactic}
             chosenFormation={chosenFormation}
             myLineup={myLineup}
+            isBidding={isBidding}
             setMyLineup={setMyLineup}
           />
         )}
@@ -1570,10 +1589,17 @@ function Auction(p: any) {
           </button>
         </div>
         <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-          <button className="primary" onClick={() => p.buy(p.bid)} disabled={p.bid <= p.highestBid} style={{ flex: 1 }}>
-            Teklif ver · {p.bid} CR
+          <button className="primary" onClick={() => p.buy(p.bid)} disabled={p.bid <= p.highestBid || p.isBidding} style={{ flex: 1 }}>
+            {p.isBidding ? (
+              <>
+                <span className="loading-spinner" style={{ marginRight: '8px' }}></span>
+                Gönderiliyor...
+              </>
+            ) : (
+              `Teklif ver · ${p.bid} CR`
+            )}
           </button>
-          <button className="ghost" onClick={p.skip}>
+          <button className="ghost" onClick={p.skip} disabled={p.isBidding}>
             Pas geç
           </button>
         </div>

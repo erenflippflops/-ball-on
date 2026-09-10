@@ -1620,3 +1620,130 @@ button:active::after {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+/* ============================================
+   DRAG & DROP LINEUP EDITOR
+   ============================================ */
+
+.drop-error {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  background: rgba(220, 38, 38, 0.2) !important;
+  border-color: var(--color-destructive) !important;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate(-50%, -50%) translateX(-2px); }
+  20%, 80% { transform: translate(-50%, -50%) translateX(2px); }
+  30%, 50%, 70% { transform: translate(-50%, -50%) translateX(-4px); }
+  40%, 60% { transform: translate(-50%, -50%) translateX(4px); }
+}
+
+/* Dragging states */
+[draggable="true"] {
+  cursor: grab;
+}
+
+[draggable="true"]:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* Drop zone hover */
+[data-slot]:hover {
+  background: rgba(132, 204, 22, 0.05);
+  border-radius: 50%;
+}
+
+/* Bench players - better styling */
+.bench-player {
+  transition: all var(--transition-base);
+}
+
+.bench-player:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(132, 204, 22, 0.2);
+}
+
+/* Halftime form elements */
+.halftime-section select,
+.halftime-section input[type="number"] {
+  width: 100%;
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  background: rgba(10, 26, 28, 0.6);
+  border: 1px solid rgba(132, 204, 22, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-foreground);
+  font-size: 0.875rem;
+  transition: all var(--transition-base);
+}
+
+.halftime-section select:focus,
+.halftime-section input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.1);
+}
+
+.halftime-section label {
+  display: block;
+  fontSize: 0.75rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+/* Marketplace items */
+.marketplace-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  background: rgba(7, 23, 19, 0.8);
+  border: 1px solid rgba(132, 204, 22, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+  transition: all var(--transition-base);
+}
+
+.marketplace-item:hover {
+  background: rgba(132, 204, 22, 0.05);
+  border-color: var(--color-accent);
+  transform: translateX(4px);
+}
+
+.marketplace-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.marketplace-item-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.marketplace-item-details {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
+.marketplace-item-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.marketplace-item-price strong {
+  font-size: 1.25rem;
+  font-family: var(--font-heading);
+  color: var(--color-accent);
+}
+
+.marketplace-item-price small {
+  font-size: 0.625rem;
+  color: var(--color-muted-foreground);
+  text-transform: uppercase;
+}
