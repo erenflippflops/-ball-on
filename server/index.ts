@@ -9,6 +9,7 @@ import { simulateMatch as runMatchSimulation } from './matchSimulator';
 import { BotAI } from './botAI';
 import { canAddPlayer, getPositionStats } from './positionLimits';
 
+// Server with tactic selection phase support
 const app = express();
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
