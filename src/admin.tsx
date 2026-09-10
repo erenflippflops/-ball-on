@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
-import { socketService } from './socketService';
 import type { Room, Phase } from './types';
 
 const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
