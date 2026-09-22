@@ -9,7 +9,7 @@ type Question = Record<string, any>;
 type Player = { id:string; nickname:string; isHost:boolean; team?:'A'|'B'; avatar:string; score:number; streak:number; connected:boolean };
 type Room = { id:string; mode:Mode; hostId:string; players:Player[]; status:string; currentRound:number; totalRounds:number; question?:Question; answered:any[]; roundScores:Record<string,number> };
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || window.location.origin;
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://127.0.0.1:3001';
 let socket: Socket | null = null;
 const avatars = ['🏆','⭐','🎯','🎨','🚀','⚡'];
 const typeLabels: Record<string,string> = { multiple_choice:'Hızlı Seçim', lightning:'Lightning Round', top_5:'Top 5', stat_detective:'Stat Detective', formation_builder:'Formation Builder', career_path:'Career Path', match_maker:'Match Maker' };
