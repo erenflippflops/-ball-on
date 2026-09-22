@@ -1,0 +1,3608 @@
+[
+  {
+    "id": "mcq-1",
+    "type": "multiple_choice",
+    "question": "2008 Avrupa Şampiyonası’nı hangi ülke kazandı?",
+    "options": [
+      "İspanya",
+      "Almanya",
+      "Fransa",
+      "İtalya"
+    ],
+    "correct_answer": "İspanya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-2",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-3",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-4",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-5",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-6",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-7",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-8",
+    "type": "multiple_choice",
+    "question": "2022 Dünya Kupası hangi ülkede düzenlendi?",
+    "options": [
+      "Katar",
+      "Rusya",
+      "Fransa",
+      "Meksika"
+    ],
+    "correct_answer": "Katar",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-9",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-10",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-11",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-12",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-13",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-14",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-15",
+    "type": "multiple_choice",
+    "question": "Lionel Messi’nin milli takımı hangisidir?",
+    "options": [
+      "Arjantin",
+      "İspanya",
+      "Uruguay",
+      "Brezilya"
+    ],
+    "correct_answer": "Arjantin",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-16",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-17",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-18",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-19",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-20",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-21",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-22",
+    "type": "multiple_choice",
+    "question": "Dünya Kupası’nı en çok kazanan ülke hangisidir?",
+    "options": [
+      "Brezilya",
+      "Almanya",
+      "İtalya",
+      "Arjantin"
+    ],
+    "correct_answer": "Brezilya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-23",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-24",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-25",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-26",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-27",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-28",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-29",
+    "type": "multiple_choice",
+    "question": "“La Roja” lakabı hangi milli takıma aittir?",
+    "options": [
+      "İspanya",
+      "Portekiz",
+      "Şili",
+      "Kolombiya"
+    ],
+    "correct_answer": "İspanya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-30",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-31",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-32",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-33",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-34",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-35",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-36",
+    "type": "multiple_choice",
+    "question": "Kalecinin ceza alanındaki özel hakkı nedir?",
+    "options": [
+      "Topu eliyle tutmak",
+      "Ofsaytı kaldırmak",
+      "Sınırsız faul",
+      "Korner kullanmak"
+    ],
+    "correct_answer": "Topu eliyle tutmak",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-37",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-38",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-39",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-40",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-41",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-42",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-43",
+    "type": "multiple_choice",
+    "question": "UEFA Şampiyonlar Ligi’nde 2020 finalinde kim kazandı?",
+    "options": [
+      "Bayern Münih",
+      "PSG",
+      "Liverpool",
+      "Real Madrid"
+    ],
+    "correct_answer": "Bayern Münih",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-44",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-45",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-46",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-47",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-48",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-49",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-50",
+    "type": "multiple_choice",
+    "question": "Altın Top ödülü neyi onurlandırır?",
+    "options": [
+      "Yılın en iyi oyuncusunu",
+      "En iyi kaleciyi",
+      "Gol kralını",
+      "En iyi teknik direktörü"
+    ],
+    "correct_answer": "Yılın en iyi oyuncusunu",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-51",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-52",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-53",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-54",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-55",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-56",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-57",
+    "type": "multiple_choice",
+    "question": "Bir futbol takımında sahada kaç oyuncu bulunur?",
+    "options": [
+      "11",
+      "9",
+      "10",
+      "12"
+    ],
+    "correct_answer": "11",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-58",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-59",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-60",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-61",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-62",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-63",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-64",
+    "type": "multiple_choice",
+    "question": "Cristiano Ronaldo 2003’te hangi kulübe transfer oldu?",
+    "options": [
+      "Manchester United",
+      "Real Madrid",
+      "Sporting CP",
+      "Juventus"
+    ],
+    "correct_answer": "Manchester United",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-65",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-66",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-67",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-68",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-69",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-70",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-71",
+    "type": "multiple_choice",
+    "question": "2008 Avrupa Şampiyonası’nı hangi ülke kazandı?",
+    "options": [
+      "İspanya",
+      "Almanya",
+      "Fransa",
+      "İtalya"
+    ],
+    "correct_answer": "İspanya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-72",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-73",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-74",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-75",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-76",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-77",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-78",
+    "type": "multiple_choice",
+    "question": "2022 Dünya Kupası hangi ülkede düzenlendi?",
+    "options": [
+      "Katar",
+      "Rusya",
+      "Fransa",
+      "Meksika"
+    ],
+    "correct_answer": "Katar",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-79",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-80",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-81",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-82",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-83",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-84",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-85",
+    "type": "multiple_choice",
+    "question": "Lionel Messi’nin milli takımı hangisidir?",
+    "options": [
+      "Arjantin",
+      "İspanya",
+      "Uruguay",
+      "Brezilya"
+    ],
+    "correct_answer": "Arjantin",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-86",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-87",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-88",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-89",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-90",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-91",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-92",
+    "type": "multiple_choice",
+    "question": "Dünya Kupası’nı en çok kazanan ülke hangisidir?",
+    "options": [
+      "Brezilya",
+      "Almanya",
+      "İtalya",
+      "Arjantin"
+    ],
+    "correct_answer": "Brezilya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-93",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  },
+  {
+    "id": "top5-94",
+    "type": "top_5",
+    "question": "2023–24 sezonunda en çok gol atan 5 oyuncuyu seç.",
+    "options": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski",
+      "Salah",
+      "Osimhen",
+      "Rashford"
+    ],
+    "correct_answers": [
+      "Haaland",
+      "Mbappé",
+      "Kane",
+      "Bellingham",
+      "Lewandowski"
+    ],
+    "points_per_answer": 100,
+    "time_limit": 30
+  },
+  {
+    "id": "detective-95",
+    "type": "stat_detective",
+    "question": "Bu oyuncu kim?",
+    "stats": {
+      "nationality": "Arjantin",
+      "league": "Ligue 1",
+      "team": "PSG",
+      "position": "RW",
+      "age": 36,
+      "shirt_number": 30
+    },
+    "correct_answer": "Lionel Messi",
+    "points": 150,
+    "time_limit": 40
+  },
+  {
+    "id": "formation-96",
+    "type": "formation_builder",
+    "question": "2023 Manchester City şampiyon kadrosu (4-3-3)",
+    "formation": "4-3-3",
+    "positions": [
+      {
+        "id": "GK",
+        "label": "GK"
+      },
+      {
+        "id": "LB",
+        "label": "LB"
+      },
+      {
+        "id": "CB1",
+        "label": "CB"
+      },
+      {
+        "id": "CB2",
+        "label": "CB"
+      },
+      {
+        "id": "RB",
+        "label": "RB"
+      },
+      {
+        "id": "CM1",
+        "label": "CM"
+      },
+      {
+        "id": "CM2",
+        "label": "CM"
+      },
+      {
+        "id": "CM3",
+        "label": "CM"
+      },
+      {
+        "id": "LW",
+        "label": "LW"
+      },
+      {
+        "id": "ST",
+        "label": "ST"
+      },
+      {
+        "id": "RW",
+        "label": "RW"
+      }
+    ],
+    "correct_formation": {
+      "GK": "Ederson",
+      "LB": "Akanji",
+      "CB1": "Dias",
+      "CB2": "Stones",
+      "RB": "Walker",
+      "CM1": "Rodri",
+      "CM2": "De Bruyne",
+      "CM3": "Bernardo Silva",
+      "LW": "Grealish",
+      "ST": "Haaland",
+      "RW": "Foden"
+    },
+    "points": 250,
+    "time_limit": 50
+  },
+  {
+    "id": "career-97",
+    "type": "career_path",
+    "question": "Cristiano Ronaldo’nun kulüplerini kariyer sırasına diz.",
+    "player": "Cristiano Ronaldo",
+    "clubs": [
+      {
+        "name": "Sporting CP",
+        "years": "2002–2003"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2003–2009"
+      },
+      {
+        "name": "Real Madrid",
+        "years": "2009–2018"
+      },
+      {
+        "name": "Juventus",
+        "years": "2018–2021"
+      },
+      {
+        "name": "Manchester United",
+        "years": "2021–2022"
+      },
+      {
+        "name": "Al-Nassr",
+        "years": "2023–"
+      }
+    ],
+    "correct_order": [
+      "Sporting CP",
+      "Manchester United",
+      "Real Madrid",
+      "Juventus",
+      "Manchester United",
+      "Al-Nassr"
+    ],
+    "points": 200,
+    "time_limit": 40
+  },
+  {
+    "id": "match-98",
+    "type": "match_maker",
+    "question": "2024 transfer sezonunda oyuncuları takımlarıyla eşleştir.",
+    "players": [
+      {
+        "name": "Jude Bellingham",
+        "hint": "19 yaş, CM"
+      },
+      {
+        "name": "Declan Rice",
+        "hint": "24 yaş, DM"
+      },
+      {
+        "name": "Harry Kane",
+        "hint": "30 yaş, ST"
+      }
+    ],
+    "teams": [
+      {
+        "name": "Real Madrid",
+        "hint": "La Liga"
+      },
+      {
+        "name": "Arsenal",
+        "hint": "Premier League"
+      },
+      {
+        "name": "Bayern Munich",
+        "hint": "Bundesliga"
+      }
+    ],
+    "correct_matches": {
+      "Jude Bellingham": "Real Madrid",
+      "Declan Rice": "Arsenal",
+      "Harry Kane": "Bayern Munich"
+    },
+    "points": 200,
+    "time_limit": 45
+  },
+  {
+    "id": "mcq-99",
+    "type": "multiple_choice",
+    "question": "“La Roja” lakabı hangi milli takıma aittir?",
+    "options": [
+      "İspanya",
+      "Portekiz",
+      "Şili",
+      "Kolombiya"
+    ],
+    "correct_answer": "İspanya",
+    "points": 100,
+    "time_limit": 10
+  },
+  {
+    "id": "lightning-100",
+    "type": "lightning",
+    "question": "⚡ Lightning Round",
+    "questions": [
+      [
+        "Messi Barcelona’da oynadı mı?",
+        true
+      ],
+      [
+        "Ronaldo beş Ballon d’Or kazandı mı?",
+        true
+      ],
+      [
+        "Futbolda her takım 12 oyuncuyla başlar mı?",
+        false
+      ],
+      [
+        "Ofsayt yalnızca rakip yarı alanda verilebilir mi?",
+        true
+      ],
+      [
+        "Bir maç iki 45 dakikalık devreden oluşur mu?",
+        true
+      ],
+      [
+        "Şampiyonlar Ligi finali her zaman Wembley’de mi oynanır?",
+        false
+      ],
+      [
+        "Korner doğrudan gol olabilir mi?",
+        true
+      ],
+      [
+        "Penaltı noktası kaleye 11 metre uzak mıdır?",
+        true
+      ],
+      [
+        "VAR tüm sarı kartları inceleyebilir mi?",
+        false
+      ],
+      [
+        "Brezilya 5 Dünya Kupası kazandı mı?",
+        true
+      ]
+    ],
+    "points_per_correct": 50,
+    "multiplier": 2,
+    "time_limit": 60
+  }
+]

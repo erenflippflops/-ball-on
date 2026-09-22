@@ -8,6 +8,22 @@ import { translations, type Language } from './translations';
 import { HalftimeComponent } from './HalftimeComponent';
 import { TACTICS, isPlayerSuitableForTactic } from './tacticsSystem';
 import { MiniField } from './MiniField';
+import MainMenu from './MainMenu';
+import AmoArena from './AmoArena';
+
+function AppRoot() {
+  const [selectedGame, setSelectedGame] = useState<'menu' | 'ball-on' | 'amo-arena'>('menu');
+
+  if (selectedGame === 'menu') {
+    return <MainMenu onSelectGame={setSelectedGame} />;
+  }
+
+  if (selectedGame === 'amo-arena') {
+    return <AmoArena />;
+  }
+
+  return <App />;
+}
 
 function App() {
   const [phase, setPhase] = useState<Phase>('lobby');
@@ -1984,4 +2000,4 @@ function AuctionResultModal({ result, language, onClose }: { result: any; langua
   );
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(<AppRoot />);

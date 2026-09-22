@@ -1,0 +1,12 @@
+/* Formation coordinates are keyed to the position id, so decorative field children cannot shift them. */
+.field .position-GK { left: 50%; top: 87%; }
+.field .position-LB { left: 18%; top: 68%; }
+.field .position-CB1 { left: 39%; top: 68%; }
+.field .position-CB2 { left: 61%; top: 68%; }
+.field .position-RB { left: 82%; top: 68%; }
+.field .position-CM1 { left: 28%; top: 44%; }
+.field .position-CM2 { left: 50%; top: 40%; }
+.field .position-CM3 { left: 72%; top: 44%; }
+.field .position-LW { left: 22%; top: 19%; }
+.field .position-ST { left: 50%; top: 13%; }
+.field .position-RW { left: 78%; top: 19%; }

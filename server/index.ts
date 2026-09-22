@@ -8,6 +8,7 @@ import { getShuffledPool } from '../src/playerPool';
 import { simulateMatch as runMatchSimulation } from './matchSimulator';
 import { BotAI } from './botAI';
 import { canAddPlayer, getPositionStats } from './positionLimits';
+import * as quizGame from './quizGame.js';
 
 // Server with tactic selection phase support
 const app = express();
@@ -1406,6 +1407,91 @@ function processStealPhase(room: Room) {
     });
   }
 }
+
+// ============================================
+// AMO ARENA (QUIZ GAME) EVENT HANDLERS
+// ============================================
+
+io.on('connection', (socket) => {
+  // Ball-On events are already handled above...
+
+  // Amo Arena Quiz events
+  socket.on('quiz_create_room', (data, callback) => {
+    try {
+      const { room, playerId } = quizGame.createRoom(data.nickname, data.mode);
+      socket.join(room.id);
+      callback({ success: true, room: quizGame.publicRoom(room), playerId });
+      io.to(room.id).emit('quiz_room_updated', quizGame.publicRoom(room));
+    } catch (error: any) {
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  socket.on('quiz_join_room', (data, callback) => {
+    try {
+      const { room, playerId } = quizGame.joinRoom(data.roomId, data.nickname);
+      socket.join(room.id);
+      callback({ success: true, room: quizGame.publicRoom(room), playerId });
+      io.to(room.id).emit('quiz_room_updated', quizGame.publicRoom(room));
+    } catch (error: any) {
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  socket.on('quiz_start_game', (data, callback) => {
+    try {
+      const room = quizGame.getRoom(data.roomId);
+      if (!room) throw new Error('Oda bulunamadı');
+      const result = quizGame.startGame(room, data.playerId || socket.id);
+      callback({ success: true });
+      io.to(room.id).emit('quiz_game_started', result);
+    } catch (error: any) {
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  socket.on('quiz_submit_answer', async (data, callback) => {
+    try {
+      const room = quizGame.getRoom(data.roomId);
+      if (!room) throw new Error('Oda bulunamadı');
+      await quizGame.submitAnswer(room, data.playerId || socket.id, data.answer);
+      callback({ success: true });
+      io.to(room.id).emit('quiz_player_answered', { playerId: data.playerId || socket.id });
+
+      // Check if all players answered - auto end round
+      if (room.answered.length === room.players.length) {
+        const result = quizGame.endRound(room, room.hostId);
+        io.to(room.id).emit('quiz_round_result', result);
+      }
+    } catch (error: any) {
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  socket.on('quiz_next_round', (data, callback) => {
+    try {
+      const room = quizGame.getRoom(data.roomId);
+      if (!room) throw new Error('Oda bulunamadı');
+
+      const result = quizGame.nextRound(room, data.playerId || socket.id);
+
+      if (result.finished) {
+        callback({ success: true, finished: true });
+        io.to(room.id).emit('quiz_game_finished', result);
+      } else {
+        callback({ success: true });
+        io.to(room.id).emit('quiz_game_started', result);
+      }
+    } catch (error: any) {
+      callback({ success: false, error: error.message });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    // Handle quiz room host disconnect
+    // You can add logic here to find and close quiz rooms if needed
+  });
+});
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', rooms: rooms.size });
