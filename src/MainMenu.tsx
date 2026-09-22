@@ -113,7 +113,7 @@ export default function MainMenu({ onSelectGame }: MainMenuProps) {
 
           {/* Amo Arena Card */}
           <button
-            onClick={() => onSelectGame('amo-arena')}
+            onClick={() => window.location.href = '/amo-arena.html'}
             style={{
               background: 'linear-gradient(135deg, #5f1e3a 0%, #8e2d5a 100%)',
               border: '2px solid #ff6b35',
