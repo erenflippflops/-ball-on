@@ -147,7 +147,7 @@ function AmoArenaApp() {
   return <Menu onCreate={() => setView('create')} onJoin={() => setView('join')} error={error} />;
 }
 
-function App() {
+export default function App() {
   return (
     <I18nProvider>
       <Shell>
@@ -156,10 +156,3 @@ function App() {
     </I18nProvider>
   );
 }
-
-const root = document.getElementById('root');
-if (root) {
-  createRoot(root).render(<App />);
-}
-
-export default App;
