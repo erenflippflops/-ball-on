@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { io, type Socket } from 'socket.io-client';
-import './style.css';
+import './amo-style.css';
 import './formation.css';
 
 type Mode = 'solo' | 'team';
