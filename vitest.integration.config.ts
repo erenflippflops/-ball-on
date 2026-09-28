@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     include: ['tests/integration/**/*.test.ts'],
     environment: 'node',
-    // Each test file starts its own server on its own port (3101-3107).
+    // Each test file starts its own server on its own port (3101-3109).
     testTimeout: 40000,
     hookTimeout: 30000,
   },

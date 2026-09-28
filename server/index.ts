@@ -443,6 +443,48 @@ function createTeam(id: string, name: string): Team {
   };
 }
 
+// K1, K4, K6 fix: centralized match start logic
+function startMatch(roomId: string) {
+  const room = rooms.get(roomId);
+  if (!room) return;
+
+  // K1: prevent duplicate matches
+  if (room.matchStarted) return;
+
+  // K6: must have exactly 2 teams to simulate
+  if (room.teams.length !== 2) {
+    console.error(`Cannot start match for room ${roomId}: expected 2 teams, got ${room.teams.length}`);
+    return;
+  }
+
+  room.matchStarted = true;
+  room.phase = 'match';
+  io.to(roomId).emit('phase_changed', { phase: 'match' });
+  io.to(roomId).emit('room_updated', room);
+
+  // K6: wrap simulation in try/catch
+  setTimeout(() => {
+    try {
+      const currentRoom = rooms.get(roomId);
+      if (!currentRoom || currentRoom.phase !== 'match') return;
+
+      const result = runMatchSimulation({
+        team1: currentRoom.teams[0],
+        team2: currentRoom.teams[1],
+        seed: Date.now()
+      });
+      currentRoom.matchResult = result;
+      currentRoom.phase = 'result';
+
+      io.to(roomId).emit('match_result', result);
+      io.to(roomId).emit('phase_changed', { phase: 'result' });
+      io.to(roomId).emit('room_updated', currentRoom);
+    } catch (err) {
+      console.error(`Error simulating match for room ${roomId}:`, err);
+    }
+  }, 3000);
+}
+
 // K5 fix: wrap all socket handlers to prevent crashes from missing ack callbacks or thrown errors
 io.on('connection', (socket) => {
   const originalOn = socket.on.bind(socket);
@@ -1023,10 +1065,8 @@ io.on('connection', (socket) => {
         }
       });
 
-      // Skip lineup and tactics phases, go directly to match
-      room.phase = 'match';
-      io.to(roomId).emit('phase_changed', { phase: 'match' });
-      io.to(roomId).emit('room_updated', room);
+      // K1: start the match automatically
+      startMatch(roomId);
     } else {
       // Send room update to show responses
       io.to(roomId).emit('room_updated', room);
@@ -1203,25 +1243,17 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.phase = 'match';
-    io.to(roomId).emit('phase_changed', { phase: 'match' });
+    // K4: reject if sender is not a member of the room
+    const isMember = room.teams.some(t => t.id === socket.id);
+    if (!isMember) {
+      callback({ success: false, error: 'Bu odanın üyesi değilsiniz' });
+      return;
+    }
 
-    // Simulate match
-    setTimeout(() => {
-      const result = runMatchSimulation({
-        team1: room.teams[0],
-        team2: room.teams[1],
-        seed: Date.now()
-      });
-      room.matchResult = result;
-      room.phase = 'result';
-
-      io.to(roomId).emit('match_result', result);
-      io.to(roomId).emit('phase_changed', { phase: 'result' });
-      io.to(roomId).emit('room_updated', room);
-    }, 3000);
-
-    callback({ success: true });
+    // K4: reject if match is not waiting to start (since K1 auto-starts, this is always true)
+    // The match can only be manually started if the room is in a state where it's waiting
+    // Since we auto-start after trade, simulate_match should always be rejected
+    callback({ success: false, error: 'Maç zaten başlatıldı veya başlatılamaz' });
   });
 
   socket.on('disconnect', () => {
@@ -1257,6 +1289,11 @@ app.post('/admin/room/:roomId/phase', (req, res) => {
 
   const { phase } = req.body;
   room.phase = phase;
+
+  // K1: reset matchStarted if going back to an earlier phase
+  if (phase !== 'match' && phase !== 'result') {
+    room.matchStarted = false;
+  }
 
   // Initialize phase-specific state
   if (phase === 'auction' && !room.auctionState) {
@@ -1331,6 +1368,7 @@ app.post('/admin/room/:roomId/reset', (req, res) => {
   room.tradeOffers = [];
   room.tradeResponses = new Set();
   room.matchResult = undefined;
+  room.matchStarted = false; // K1: allow a new match after reset
 
   room.teams.forEach(team => {
     team.budget = 100;
