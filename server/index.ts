@@ -443,6 +443,61 @@ function createTeam(id: string, name: string): Team {
   };
 }
 
+// K5 fix: wrap all socket handlers to prevent crashes from missing ack callbacks or thrown errors
+io.on('connection', (socket) => {
+  const originalOn = socket.on.bind(socket);
+  socket.on = function (event: string, handler: (...args: any[]) => any) {
+    return originalOn(event, (...args: any[]) => {
+      // Ensure we have at least a payload and an ack callback
+      let payload = args[0];
+      let ack = args[args.length - 1];
+
+      // If no arguments, provide empty payload and no-op ack
+      if (args.length === 0) {
+        payload = {};
+        ack = () => {};
+        args = [payload, ack];
+      }
+      // If last arg is not a function, append no-op ack
+      else if (typeof ack !== 'function') {
+        ack = () => {};
+        args.push(ack);
+      }
+      // If only one arg and it's the ack, insert empty payload
+      else if (args.length === 1) {
+        payload = {};
+        args = [payload, ack];
+      }
+
+      try {
+        const result = handler(...args);
+        // If handler returns a Promise, catch async errors
+        if (result && typeof result.then === 'function') {
+          result.catch((err: Error) => {
+            console.error(`Error in async handler for event "${event}":`, err);
+            try {
+              if (typeof ack === 'function') {
+                ack({ success: false, error: 'Sunucu hatası' });
+              }
+            } catch (ackErr) {
+              // Ignore ack errors to prevent cascading crashes
+            }
+          });
+        }
+      } catch (err) {
+        console.error(`Error in handler for event "${event}":`, err);
+        try {
+          if (typeof ack === 'function') {
+            ack({ success: false, error: 'Sunucu hatası' });
+          }
+        } catch (ackErr) {
+          // Ignore ack errors to prevent cascading crashes
+        }
+      }
+    });
+  };
+});
+
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
