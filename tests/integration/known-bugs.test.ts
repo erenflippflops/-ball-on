@@ -1,341 +1,113 @@
+/**
+ * Known bugs K1, K2, K4. Each bug has TWO tests:
+ *  1. "(current symptom)": a NORMAL test that asserts today's exact buggy behavior.
+ *     It proves the bug is real and that the second test fails for the RIGHT reason.
+ *  2. "(correct behavior)": it.fails, asserting what the game SHOULD do.
+ * When a bug gets fixed, BOTH tests turn red. That is the signal to update this file:
+ * delete the symptom test and turn it.fails into a normal it().
+ * K3 lives in tests/unit/positionLimits.test.ts, K5 in k5-server-crash.test.ts.
+ */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { spawn, ChildProcess } from 'child_process';
-import { io, Socket } from 'socket.io-client';
+import { startServer, setupBallOn, playToMatch, connect, emitAck, sleep, waitFor, type TestServer } from './helpers';
 
-const PORT = 3102;
-const SERVER_URL = `http://127.0.0.1:${PORT}`;
+let server: TestServer;
+beforeAll(async () => { server = await startServer(3103); });
+afterAll(async () => { await server?.stop(); });
 
-let serverProcess: ChildProcess;
-
-async function waitForServer(maxAttempts = 30): Promise<void> {
-  for (let i = 0; i < maxAttempts; i++) {
+describe('K1: the match never starts by itself', () => {
+  it('KNOWN BUG K1 (current symptom): phase stays "match" and no match_result arrives within 3 s', async () => {
+    const game = await setupBallOn(server.url, 2);
     try {
-      const response = await fetch(`${SERVER_URL}/health`);
-      if (response.ok) return;
-    } catch (e) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await playToMatch(game);
+      await sleep(3000);
+      expect(game.tracker.phase).toBe('match');
+      expect(game.tracker.matchResults).toHaveLength(0);
+    } finally {
+      game.close();
     }
-  }
-  throw new Error('Server failed to start');
-}
-
-function createSocket(): Socket {
-  return io(SERVER_URL, { transports: ['websocket'] });
-}
-
-function emitAck<T = any>(socket: Socket, event: string, payload: any, timeoutMs = 5000): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Timeout on ${event}`)), timeoutMs);
-    socket.emit(event, payload, (response: T) => {
-      clearTimeout(timer);
-      resolve(response);
-    });
-  });
-}
-
-async function reachMatchPhase(s1: Socket, s2: Socket, roomId: string): Promise<any> {
-  let currentRoom: any;
-  s1.on('room_updated', (r: any) => { currentRoom = r; });
-
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'first_half_auction' && r(d)));
-
-  // First half
-  let maxIterations = 100;
-  while (currentRoom.phase === 'first_half_auction' && maxIterations-- > 0) {
-    const bid1Res = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
-    if (!bid1Res.success) await emitAck(s1, 'skip_player', { roomId });
-    await emitAck(s2, 'skip_player', { roomId });
-    await new Promise(r => {
-      const timeout = setTimeout(r, 200);
-      const listener = () => { clearTimeout(timeout); r(undefined); };
-      s1.once('next_player', listener);
-      s1.once('phase_changed', listener);
-    });
-  }
-
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'halftime' && r(d)));
-  await emitAck(s1, 'finish_halftime', { roomId });
-  await emitAck(s2, 'finish_halftime', { roomId });
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'second_half_auction' && r(d)));
-
-  // Second half
-  maxIterations = 100;
-  while (currentRoom.phase === 'second_half_auction' && maxIterations-- > 0) {
-    const bid1Res = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
-    if (!bid1Res.success) await emitAck(s1, 'skip_player', { roomId });
-    await emitAck(s2, 'skip_player', { roomId });
-    await new Promise(r => {
-      const timeout = setTimeout(r, 200);
-      const listener = () => { clearTimeout(timeout); r(undefined); };
-      s1.once('next_player', listener);
-      s1.once('phase_changed', listener);
-    });
-  }
-
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'steal' && r(d)));
-
-  await emitAck(s1, 'submit_steal', {
-    roomId,
-    target: currentRoom.teams[1].roster[0].id,
-    offer: currentRoom.teams[0].roster[1].id,
-    protect: currentRoom.teams[0].roster[2].id
-  });
-  await emitAck(s2, 'submit_steal', {
-    roomId,
-    target: currentRoom.teams[0].roster[0].id,
-    offer: currentRoom.teams[1].roster[1].id,
-    protect: currentRoom.teams[1].roster[2].id
   });
 
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'trade' && r(d)));
-  await emitAck(s1, 'trade_response', { roomId, accept: false });
-  await emitAck(s2, 'trade_response', { roomId, accept: false });
-
-  await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'match' && r(d)));
-
-  return currentRoom;
-}
-
-beforeAll(async () => {
-  serverProcess = spawn(process.execPath, ['node_modules/tsx/dist/cli.mjs', 'server/index.ts'], {
-    env: { ...process.env, PORT: String(PORT) },
-    stdio: 'pipe'
+  it.fails('KNOWN BUG K1 (correct behavior): match_result arrives by itself within 10 s and phase becomes "result"', async () => {
+    const game = await setupBallOn(server.url, 2);
+    try {
+      await playToMatch(game);
+      await game.tracker.waitForPhase('result', 10000);
+      expect(game.tracker.matchResults).toHaveLength(1);
+    } finally {
+      game.close();
+    }
   });
-  await waitForServer();
-}, 60000);
-
-afterAll(async () => {
-  if (serverProcess) {
-    serverProcess.kill();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
 });
 
-describe('Known Bug K1', () => {
-  it('KNOWN BUG K1 (current symptom): phase is match, no match_result within 3s, phase stays match', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
-
+describe('K4: a socket outside the room can start that room\'s match', () => {
+  it('KNOWN BUG K4 (current symptom): outsider gets {success:true} and the room goes to "result"', async () => {
+    const game = await setupBallOn(server.url, 2);
+    const outsider = await connect(server.url);
     try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'create_room', { nickname: 'P1', maxPlayers: 2, competition: 'Test' });
-      const roomId = createRes.roomId;
-
-      await emitAck(s2, 'join_room', { roomId, nickname: 'P2' });
-      await emitAck(s1, 'start_game', { roomId });
-      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
-
-      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-      await emitAck(s2, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-
-      const currentRoom = await reachMatchPhase(s1, s2, roomId);
-
-      // Current symptom: phase is 'match', no match_result arrives, phase stays 'match'
-      expect(currentRoom.phase).toBe('match');
-
-      const matchResultReceived = await Promise.race([
-        new Promise((resolve) => s1.once('match_result', () => resolve(true))),
-        new Promise((resolve) => setTimeout(() => resolve(false), 3000))
-      ]);
-
-      expect(matchResultReceived).toBe(false);
-      expect(currentRoom.phase).toBe('match');
+      await playToMatch(game);
+      const res = await emitAck<any>(outsider, 'simulate_match', { roomId: game.roomId });
+      expect(res).toEqual({ success: true });
+      await game.tracker.waitForPhase('result', 3000);
+      expect(game.tracker.matchResults).toHaveLength(1);
     } finally {
-      s1.disconnect();
-      s2.disconnect();
+      outsider.close();
+      game.close();
     }
-  }, 60000);
+  });
 
-  it.fails('KNOWN BUG K1 (correct behavior): match_result arrives automatically within 3s, phase becomes result', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
-
+  it.fails('KNOWN BUG K4 (correct behavior): outsider is rejected and the room stays in "match"', async () => {
+    const game = await setupBallOn(server.url, 2);
+    const outsider = await connect(server.url);
     try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'create_room', { nickname: 'P1', maxPlayers: 2, competition: 'Test' });
-      const roomId = createRes.roomId;
-
-      await emitAck(s2, 'join_room', { roomId, nickname: 'P2' });
-      await emitAck(s1, 'start_game', { roomId });
-      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
-
-      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-      await emitAck(s2, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-
-      let currentRoom = await reachMatchPhase(s1, s2, roomId);
-      s1.on('room_updated', (r: any) => { currentRoom = r; });
-
-      expect(currentRoom.phase).toBe('match');
-
-      // Correct behavior: match_result arrives automatically
-      const matchResult: any = await new Promise((resolve, reject) => {
-        s1.once('match_result', resolve);
-        setTimeout(() => reject(new Error('No match_result within 3s')), 3000);
-      });
-
-      expect(matchResult.homeScore).toBeGreaterThanOrEqual(0);
-      expect(currentRoom.phase).toBe('result');
+      await playToMatch(game);
+      const res = await emitAck<any>(outsider, 'simulate_match', { roomId: game.roomId });
+      expect(res.success).toBe(false);
+      await sleep(1000);
+      expect(game.tracker.phase).toBe('match');
+      expect(game.tracker.matchResults).toHaveLength(0);
     } finally {
-      s1.disconnect();
-      s2.disconnect();
+      outsider.close();
+      game.close();
     }
-  }, 60000);
+  });
 });
 
-describe('Known Bug K2', () => {
-  it('KNOWN BUG K2 (current symptom): quiz_start_game ack is {success:false, error:"Yalnızca host oyunu başlatabilir"}', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
+/** Creates an AMO ARENA room with 2 players, sending exactly what the real client sends. */
+async function amoRoomWithTwoPlayers() {
+  const host = await connect(server.url);
+  const guest = await connect(server.url);
+  const started = { host: false, guest: false };
+  host.on('quiz_game_started', () => (started.host = true));
+  guest.on('quiz_game_started', () => (started.guest = true));
+  const created = await emitAck<any>(host, 'quiz_create_room', { nickname: 'Host', mode: 'solo' });
+  expect(created.success).toBe(true);
+  const joined = await emitAck<any>(guest, 'quiz_join_room', { roomId: created.room.id, nickname: 'Guest' });
+  expect(joined.success).toBe(true);
+  return { host, guest, roomId: created.room.id as string, started, close: () => { host.close(); guest.close(); } };
+}
 
+describe('K2: the AMO ARENA host cannot start the game', () => {
+  it('KNOWN BUG K2 (current symptom): quiz_start_game {roomId} is rejected with "Yalnızca host oyunu başlatabilir"', async () => {
+    const amo = await amoRoomWithTwoPlayers();
     try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'quiz_create_room', { nickname: 'Host', mode: 'solo' });
-      const roomCode = createRes.room.id;
-
-      await emitAck(s2, 'quiz_join_room', { roomId: roomCode, nickname: 'Player2' });
-      await new Promise(r => setTimeout(r, 500));
-
-      const startRes = await emitAck(s1, 'quiz_start_game', { roomId: roomCode });
-
-      expect(startRes.success).toBe(false);
-      expect(startRes.error).toBe('Yalnızca host oyunu başlatabilir');
+      // src/amo-arena-main.tsx sends only { roomId }, no playerId.
+      const res = await emitAck<any>(amo.host, 'quiz_start_game', { roomId: amo.roomId });
+      expect(res).toEqual({ success: false, error: 'Yalnızca host oyunu başlatabilir' });
+      await sleep(500);
+      expect(amo.started).toEqual({ host: false, guest: false });
     } finally {
-      s1.disconnect();
-      s2.disconnect();
+      amo.close();
     }
-  }, 30000);
+  });
 
-  it.fails('KNOWN BUG K2 (correct behavior): host start succeeds, both receive quiz_game_started', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
-
+  it.fails('KNOWN BUG K2 (correct behavior): host start succeeds and both players receive quiz_game_started', async () => {
+    const amo = await amoRoomWithTwoPlayers();
     try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'quiz_create_room', { nickname: 'Host', mode: 'solo' });
-      const roomCode = createRes.room.id;
-
-      await emitAck(s2, 'quiz_join_room', { roomId: roomCode, nickname: 'Player2' });
-      await new Promise(r => setTimeout(r, 500));
-
-      const startRes = await emitAck(s1, 'quiz_start_game', { roomId: roomCode });
-      expect(startRes.success).toBe(true);
-
-      const gameStarted1 = await new Promise(r => s1.once('quiz_game_started', r));
-      const gameStarted2 = await new Promise(r => s2.once('quiz_game_started', r));
-
-      expect(gameStarted1).toBeDefined();
-      expect(gameStarted2).toBeDefined();
+      const res = await emitAck<any>(amo.host, 'quiz_start_game', { roomId: amo.roomId });
+      expect(res.success).toBe(true);
+      await waitFor(() => amo.started.host && amo.started.guest, 'both receive quiz_game_started', 3000);
     } finally {
-      s1.disconnect();
-      s2.disconnect();
+      amo.close();
     }
-  }, 30000);
-});
-
-describe('Known Bug K4', () => {
-  it('KNOWN BUG K4 (current symptom): outsider simulate_match ack {success:true}, room members receive match_result and phase becomes result', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
-    const outsider = createSocket();
-
-    try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r)),
-        new Promise(r => outsider.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'create_room', { nickname: 'P1', maxPlayers: 2, competition: 'Test' });
-      const roomId = createRes.roomId;
-
-      await emitAck(s2, 'join_room', { roomId, nickname: 'P2' });
-      await emitAck(s1, 'start_game', { roomId });
-      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
-
-      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-      await emitAck(s2, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-
-      let currentRoom = await reachMatchPhase(s1, s2, roomId);
-      s1.on('room_updated', (r: any) => { currentRoom = r; });
-
-      expect(currentRoom.phase).toBe('match');
-
-      // Outsider never joined but emits simulate_match
-      const simRes = await emitAck(outsider, 'simulate_match', { roomId });
-
-      // Current symptom: ack is {success:true}
-      expect(simRes.success).toBe(true);
-
-      // Room members receive match_result
-      const matchResult = await new Promise((resolve) => {
-        s1.once('match_result', resolve);
-        setTimeout(() => resolve(null), 2000);
-      });
-
-      expect(matchResult).not.toBeNull();
-
-      // Phase becomes result
-      await new Promise(r => setTimeout(r, 500));
-      expect(currentRoom.phase).toBe('result');
-    } finally {
-      s1.disconnect();
-      s2.disconnect();
-      outsider.disconnect();
-    }
-  }, 60000);
-
-  it.fails('KNOWN BUG K4 (correct behavior): outsider simulate_match rejected, room unchanged', async () => {
-    const s1 = createSocket();
-    const s2 = createSocket();
-    const outsider = createSocket();
-
-    try {
-      await Promise.all([
-        new Promise(r => s1.on('connect', r)),
-        new Promise(r => s2.on('connect', r)),
-        new Promise(r => outsider.on('connect', r))
-      ]);
-
-      const createRes = await emitAck(s1, 'create_room', { nickname: 'P1', maxPlayers: 2, competition: 'Test' });
-      const roomId = createRes.roomId;
-
-      await emitAck(s2, 'join_room', { roomId, nickname: 'P2' });
-      await emitAck(s1, 'start_game', { roomId });
-      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
-
-      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-      await emitAck(s2, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
-
-      let currentRoom = await reachMatchPhase(s1, s2, roomId);
-      s1.on('room_updated', (r: any) => { currentRoom = r; });
-
-      const phaseBeforeAttempt = currentRoom.phase;
-
-      const simRes = await emitAck(outsider, 'simulate_match', { roomId });
-      expect(simRes.success).toBe(false);
-
-      await new Promise(r => setTimeout(r, 2000));
-      expect(currentRoom.phase).toBe(phaseBeforeAttempt);
-    } finally {
-      s1.disconnect();
-      s2.disconnect();
-      outsider.disconnect();
-    }
-  }, 60000);
+  });
 });
