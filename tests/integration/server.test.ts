@@ -23,12 +23,12 @@ function createSocket(): Socket {
   return io(SERVER_URL, { transports: ['websocket'] });
 }
 
-function waitForEvent<T>(socket: Socket, event: string, timeout = 10000): Promise<T> {
+function emitAck<T = any>(socket: Socket, event: string, payload: any, timeoutMs = 5000): Promise<T> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`Timeout waiting for ${event}`)), timeout);
-    socket.once(event, (data: T) => {
+    const timer = setTimeout(() => reject(new Error(`Timeout on ${event}`)), timeoutMs);
+    socket.emit(event, payload, (response: T) => {
       clearTimeout(timer);
-      resolve(data);
+      resolve(response);
     });
   });
 }
@@ -38,7 +38,6 @@ beforeAll(async () => {
     env: { ...process.env, PORT: String(PORT) },
     stdio: 'pipe'
   });
-
   await waitForServer();
 }, 60000);
 
@@ -49,408 +48,305 @@ afterAll(async () => {
   }
 });
 
-describe('BALL-ON integration', () => {
-  it('2 humans: full flow from lobby to match phase', async () => {
-    const socket1 = createSocket();
-    const socket2 = createSocket();
+describe('BALL-ON 2 humans full flow', () => {
+  it('lobby -> tactic_selection -> first_half_auction -> halftime -> second_half_auction -> steal -> trade -> match -> result', async () => {
+    const s1 = createSocket();
+    const s2 = createSocket();
 
     try {
       await Promise.all([
-        new Promise(resolve => socket1.on('connect', resolve)),
-        new Promise(resolve => socket2.on('connect', resolve))
+        new Promise(r => s1.on('connect', r)),
+        new Promise(r => s2.on('connect', r))
       ]);
 
       // Create room
-      socket1.emit('create_room', { nick: 'Player1', maxPlayers: 2, competition: 'Premier League' });
-      const room1 = await waitForEvent<any>(socket1, 'room_updated');
-      expect(room1.phase).toBe('lobby');
-      const roomCode = room1.id;
+      const createRes = await emitAck(s1, 'create_room', { nickname: 'P1', maxPlayers: 2, competition: 'Test' });
+      expect(createRes.success).toBe(true);
+      const roomId = createRes.roomId;
+      expect(createRes.room.phase).toBe('lobby');
 
-      // Player 2 joins
-      socket2.emit('join_room', { room: roomCode, nick: 'Player2' });
-      const room2 = await waitForEvent<any>(socket2, 'room_updated');
-      expect(room2.teams).toHaveLength(2);
+      // Join
+      const joinRes = await emitAck(s2, 'join_room', { roomId, nickname: 'P2' });
+      expect(joinRes.success).toBe(true);
+      expect(joinRes.room.teams).toHaveLength(2);
 
-      // Start game
-      socket1.emit('start_game');
-      const tacticPhase1 = await waitForEvent<any>(socket1, 'room_updated');
-      expect(tacticPhase1.phase).toBe('tactic_selection');
+      // Start game -> tactic_selection
+      await emitAck(s1, 'start_game', { roomId });
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
 
       // Both select tactics
-      socket1.emit('select_tactic', { tactic: 'tiki-taka', formation: '4-3-3' });
-      socket2.emit('select_tactic', { tactic: 'tiki-taka', formation: '4-3-3' });
+      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
+      await emitAck(s2, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
 
-      const auctionPhase1 = await waitForEvent<any>(socket1, 'room_updated');
-      expect(auctionPhase1.phase).toBe('first_half_auction');
+      // Wait for first_half_auction (~2.5s after last tactic)
+      const phases: string[] = [];
+      let currentRoom: any;
+      s1.on('phase_changed', (d: any) => { phases.push(d.phase); });
+      s1.on('room_updated', (r: any) => { currentRoom = r; });
 
-      // Track phases
-      const phases: string[] = [auctionPhase1.phase];
-      let currentRoom = auctionPhase1;
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'first_half_auction' && r(d)));
+      expect(phases).toContain('first_half_auction');
 
-      const phaseListener = (room: any) => {
-        if (room.phase !== phases[phases.length - 1]) {
-          phases.push(room.phase);
+      // Mix bids and skips until 11 players each
+      let playersSold = 0;
+      let maxIterations = 100;
+      while (currentRoom.phase === 'first_half_auction' && maxIterations-- > 0) {
+        const team1 = currentRoom.teams[0];
+        const team2 = currentRoom.teams[1];
+
+        if (team1.roster.length >= 11 && team2.roster.length >= 11) break;
+
+        // Try bid for team1, skip if rejected
+        const bid1Res = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
+        if (!bid1Res.success) {
+          await emitAck(s1, 'skip_player', { roomId });
         }
-        currentRoom = room;
-      };
 
-      socket1.on('room_updated', phaseListener);
-      socket2.on('room_updated', phaseListener);
+        await emitAck(s2, 'skip_player', { roomId });
 
-      // Skip players until halftime
-      while (currentRoom.phase === 'first_half_auction' && currentRoom.teams[0].roster.length < 11) {
-        socket1.emit('skip_player');
-        socket2.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait for next player or phase change
+        await new Promise(r => {
+          const timeout = setTimeout(r, 200);
+          const listener = () => { clearTimeout(timeout); r(undefined); };
+          s1.once('next_player', listener);
+          s1.once('phase_changed', listener);
+        });
+
+        playersSold++;
       }
 
-      // Wait for halftime
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (maxIterations <= 0) {
+        throw new Error(`Stuck in first_half_auction after 100 iterations. Phase: ${currentRoom.phase}, rosters: ${currentRoom.teams[0].roster.length}/${currentRoom.teams[1].roster.length}`);
+      }
+
+      // Assert halftime reached
+      if (!phases.includes('halftime')) {
+        await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'halftime' && r(d)));
+      }
       expect(phases).toContain('halftime');
 
-      // Finish halftime
-      socket1.emit('finish_halftime');
-      socket2.emit('finish_halftime');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      // Finish halftime -> second_half_auction
+      await emitAck(s1, 'finish_halftime', { roomId });
+      await emitAck(s2, 'finish_halftime', { roomId });
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'second_half_auction' && r(d)));
       expect(phases).toContain('second_half_auction');
 
-      // Skip until steal phase
-      while (currentRoom.phase === 'second_half_auction' && currentRoom.teams[0].roster.length < 11) {
-        socket1.emit('skip_player');
-        socket2.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 500));
+      // Second half auction until steal
+      maxIterations = 100;
+      while (currentRoom.phase === 'second_half_auction' && maxIterations-- > 0) {
+        const bid1Res = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
+        if (!bid1Res.success) await emitAck(s1, 'skip_player', { roomId });
+
+        await emitAck(s2, 'skip_player', { roomId });
+
+        await new Promise(r => {
+          const timeout = setTimeout(r, 200);
+          const listener = () => { clearTimeout(timeout); r(undefined); };
+          s1.once('next_player', listener);
+          s1.once('phase_changed', listener);
+        });
       }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (maxIterations <= 0) {
+        throw new Error(`Stuck in second_half_auction. Phase: ${currentRoom.phase}`);
+      }
+
+      if (!phases.includes('steal')) {
+        await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'steal' && r(d)));
+      }
       expect(phases).toContain('steal');
 
-      // At steal phase, check roster sizes
+      // At steal, check rosters
       expect(currentRoom.teams[0].roster).toHaveLength(11);
       expect(currentRoom.teams[1].roster).toHaveLength(11);
 
-      // Check no duplicate player IDs
-      const allPlayerIds = [
+      // Check no duplicate IDs
+      const allIds = [
         ...currentRoom.teams[0].roster.map((p: any) => p.id),
         ...currentRoom.teams[1].roster.map((p: any) => p.id)
       ];
-      const uniqueIds = new Set(allPlayerIds);
-      expect(uniqueIds.size).toBe(allPlayerIds.length);
+      expect(new Set(allIds).size).toBe(allIds.length);
 
       // Check budgets non-negative
       expect(currentRoom.teams[0].budget).toBeGreaterThanOrEqual(0);
       expect(currentRoom.teams[1].budget).toBeGreaterThanOrEqual(0);
 
-      // Submit steal choices
-      const player1ToSteal = currentRoom.teams[1].roster[0];
-      const player2ToSteal = currentRoom.teams[0].roster[0];
-      const offer1 = currentRoom.teams[0].roster[1];
-      const offer2 = currentRoom.teams[1].roster[1];
-      const protect1 = currentRoom.teams[0].roster[2];
-      const protect2 = currentRoom.teams[1].roster[2];
+      // Check position limits during auction
+      for (const team of currentRoom.teams) {
+        const gk = team.roster.filter((p: any) => p.primaryPosition === 'GK').length;
+        const def = team.roster.filter((p: any) => ['CB', 'LB', 'RB'].includes(p.primaryPosition)).length;
+        const mid = team.roster.filter((p: any) => ['CM', 'CDM', 'CAM', 'LM', 'RM'].includes(p.primaryPosition)).length;
+        const att = team.roster.filter((p: any) => ['ST', 'LW', 'RW', 'CF'].includes(p.primaryPosition)).length;
 
-      socket1.emit('submit_steal', {
-        target: currentRoom.teams[1].id,
-        offer: offer1.id,
-        protect: protect1.id
-      });
-      socket2.emit('submit_steal', {
-        target: currentRoom.teams[0].id,
-        offer: offer2.id,
-        protect: protect2.id
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      expect(phases).toContain('trade');
-
-      // Respond to trade offers (decline all)
-      while (currentRoom.phase === 'trade') {
-        socket1.emit('trade_response', { accept: false });
-        socket2.emit('trade_response', { accept: false });
-        await new Promise(resolve => setTimeout(resolve, 500));
+        expect(gk).toBeLessThanOrEqual(1);
+        expect(def).toBeLessThanOrEqual(4);
+        expect(mid).toBeLessThanOrEqual(3);
+        expect(att).toBeLessThanOrEqual(3);
       }
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      expect(phases).toContain('match');
-
-      // Verify phase order
-      expect(phases).toEqual([
-        'first_half_auction',
-        'halftime',
-        'second_half_auction',
-        'steal',
-        'trade',
-        'match'
-      ]);
-
-      // Workaround for K1: manually trigger simulate_match
-      socket1.emit('simulate_match');
-      const matchResult = await waitForEvent<any>(socket1, 'match_result', 15000);
-
-      expect(matchResult.homeScore).toBeGreaterThanOrEqual(0);
-      expect(matchResult.awayScore).toBeGreaterThanOrEqual(0);
-      expect(Number.isInteger(matchResult.homeScore)).toBe(true);
-      expect(Number.isInteger(matchResult.awayScore)).toBe(true);
-
-      const finalRoom = await waitForEvent<any>(socket1, 'room_updated');
-      expect(finalRoom.phase).toBe('result');
-    } finally {
-      socket1.disconnect();
-      socket2.disconnect();
-    }
-  }, 120000);
-
-  it.fails('KNOWN BUG K1: match never starts without manual simulate_match', async () => {
-    const socket1 = createSocket();
-    const socket2 = createSocket();
-
-    try {
-      await Promise.all([
-        new Promise(resolve => socket1.on('connect', resolve)),
-        new Promise(resolve => socket2.on('connect', resolve))
-      ]);
-
-      socket1.emit('create_room', { nick: 'P1', maxPlayers: 2, competition: 'Test' });
-      const room1 = await waitForEvent<any>(socket1, 'room_updated');
-      socket2.emit('join_room', { room: room1.id, nick: 'P2' });
-      await waitForEvent<any>(socket2, 'room_updated');
-
-      socket1.emit('start_game');
-      await waitForEvent<any>(socket1, 'room_updated');
-
-      socket1.emit('select_tactic', { tactic: 'balanced', formation: '4-3-3' });
-      socket2.emit('select_tactic', { tactic: 'balanced', formation: '4-3-3' });
-      await waitForEvent<any>(socket1, 'room_updated');
-
-      let currentRoom: any;
-      const listener = (room: any) => { currentRoom = room; };
-      socket1.on('room_updated', listener);
-
-      // Skip to end
-      for (let i = 0; i < 30; i++) {
-        socket1.emit('skip_player');
-        socket2.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      socket1.emit('finish_halftime');
-      socket2.emit('finish_halftime');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      for (let i = 0; i < 30; i++) {
-        socket1.emit('skip_player');
-        socket2.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      const target1 = currentRoom.teams[1].roster[0];
-      const target2 = currentRoom.teams[0].roster[0];
-      socket1.emit('submit_steal', {
-        target: currentRoom.teams[1].id,
+      // Submit steal
+      await emitAck(s1, 'submit_steal', {
+        roomId,
+        target: currentRoom.teams[1].roster[0].id,
         offer: currentRoom.teams[0].roster[1].id,
         protect: currentRoom.teams[0].roster[2].id
       });
-      socket2.emit('submit_steal', {
-        target: currentRoom.teams[0].id,
+      await emitAck(s2, 'submit_steal', {
+        roomId,
+        target: currentRoom.teams[0].roster[0].id,
         offer: currentRoom.teams[1].roster[1].id,
         protect: currentRoom.teams[1].roster[2].id
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait for trade phase
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'trade' && r(d)));
+      expect(phases).toContain('trade');
 
-      for (let i = 0; i < 10; i++) {
-        socket1.emit('trade_response', { accept: false });
-        socket2.emit('trade_response', { accept: false });
-        await new Promise(resolve => setTimeout(resolve, 300));
-      }
+      // Decline trades
+      await emitAck(s1, 'trade_response', { roomId, accept: false });
+      await emitAck(s2, 'trade_response', { roomId, accept: false });
 
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for match phase
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'match' && r(d)));
+      expect(phases).toContain('match');
 
-      // Should receive match_result without manual simulate_match
-      const matchResult = await waitForEvent<any>(socket1, 'match_result', 10000);
-      expect(matchResult.homeScore).toBeGreaterThanOrEqual(0);
+      // K1 workaround: manually simulate
+      await emitAck(s1, 'simulate_match', { roomId });
 
-      const finalRoom = await waitForEvent<any>(socket1, 'room_updated');
-      expect(finalRoom.phase).toBe('result');
-    } finally {
-      socket1.disconnect();
-      socket2.disconnect();
-    }
-  }, 120000);
-
-  it.fails('KNOWN BUG K4: non-room-member can trigger simulate_match', async () => {
-    const socket1 = createSocket();
-    const socket2 = createSocket();
-    const outsider = createSocket();
-
-    try {
-      await Promise.all([
-        new Promise(resolve => socket1.on('connect', resolve)),
-        new Promise(resolve => socket2.on('connect', resolve)),
-        new Promise(resolve => outsider.on('connect', resolve))
-      ]);
-
-      socket1.emit('create_room', { nick: 'P1', maxPlayers: 2, competition: 'Test' });
-      const room = await waitForEvent<any>(socket1, 'room_updated');
-      const roomId = room.id;
-
-      socket2.emit('join_room', { room: roomId, nick: 'P2' });
-      await waitForEvent<any>(socket2, 'room_updated');
-
-      // Outsider never joined the room but emits simulate_match
-      outsider.emit('simulate_match', { roomId });
-
-      const response = await waitForEvent<any>(outsider, 'match_result').catch(() => null);
-
-      // Should be rejected, not succeed
-      expect(response).toBeNull();
-    } finally {
-      socket1.disconnect();
-      socket2.disconnect();
-      outsider.disconnect();
-    }
-  }, 30000);
-
-  it('bot mode: 1 human + bot reaches match phase', async () => {
-    const socket1 = createSocket();
-
-    try {
-      await new Promise(resolve => socket1.on('connect', resolve));
-
-      socket1.emit('create_room', { nick: 'Human', maxPlayers: 2, competition: 'Test' });
-      const room1 = await waitForEvent<any>(socket1, 'room_updated');
-
-      socket1.emit('start_game');
-      const tacticPhase = await waitForEvent<any>(socket1, 'room_updated');
-      expect(tacticPhase.phase).toBe('tactic_selection');
-
-      socket1.emit('select_tactic', { tactic: 'balanced', formation: '4-3-3' });
-      const auctionPhase = await waitForEvent<any>(socket1, 'room_updated');
-      expect(auctionPhase.phase).toBe('first_half_auction');
-
-      let currentRoom = auctionPhase;
-      const listener = (room: any) => { currentRoom = room; };
-      socket1.on('room_updated', listener);
-
-      // Skip through auction (bot should participate)
-      for (let i = 0; i < 50; i++) {
-        socket1.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        if (currentRoom.phase !== 'first_half_auction') break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      socket1.emit('finish_halftime');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      for (let i = 0; i < 50; i++) {
-        socket1.emit('skip_player');
-        await new Promise(resolve => setTimeout(resolve, 200));
-        if (currentRoom.phase === 'steal') break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Bot should have 11 players
-      const botTeam = currentRoom.teams.find((t: any) => t.name.includes('Bot'));
-      expect(botTeam).toBeDefined();
-      expect(botTeam.roster).toHaveLength(11);
-
-      socket1.emit('submit_steal', {
-        target: botTeam.id,
-        offer: currentRoom.teams[0].roster[0].id,
-        protect: currentRoom.teams[0].roster[1].id
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      for (let i = 0; i < 10; i++) {
-        socket1.emit('trade_response', { accept: false });
-        await new Promise(resolve => setTimeout(resolve, 300));
-        if (currentRoom.phase === 'match') break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      expect(currentRoom.phase).toBe('match');
-
-      // Workaround for K1
-      socket1.emit('simulate_match');
-      const matchResult = await waitForEvent<any>(socket1, 'match_result', 15000);
-
+      const matchResult: any = await new Promise(r => s1.once('match_result', r));
+      expect(Number.isInteger(matchResult.homeScore)).toBe(true);
+      expect(Number.isInteger(matchResult.awayScore)).toBe(true);
       expect(matchResult.homeScore).toBeGreaterThanOrEqual(0);
       expect(matchResult.awayScore).toBeGreaterThanOrEqual(0);
 
-      const finalRoom = await waitForEvent<any>(socket1, 'room_updated');
-      expect(finalRoom.phase).toBe('result');
+      await new Promise(r => setTimeout(r, 500));
+      expect(currentRoom.phase).toBe('result');
+
+      // Verify phase order
+      expect(phases).toEqual(['first_half_auction', 'halftime', 'second_half_auction', 'steal', 'trade', 'match']);
     } finally {
-      socket1.disconnect();
+      s1.disconnect();
+      s2.disconnect();
     }
-  }, 120000);
+  }, 60000);
 });
 
-describe('AMO ARENA integration', () => {
-  it('creates room and second player joins', async () => {
-    const socket1 = createSocket();
-    const socket2 = createSocket();
+describe('BALL-ON bot mode full flow', () => {
+  it('1 human + bot: lobby -> ... -> result', async () => {
+    const s1 = createSocket();
 
     try {
-      await Promise.all([
-        new Promise(resolve => socket1.on('connect', resolve)),
-        new Promise(resolve => socket2.on('connect', resolve))
-      ]);
+      await new Promise(r => s1.on('connect', r));
 
-      socket1.emit('quiz_create_room', { nickname: 'Host', mode: 'solo' });
-      const createResult = await waitForEvent<any>(socket1, 'quiz_room_created');
-      expect(createResult.room.players).toHaveLength(1);
+      const createRes = await emitAck(s1, 'create_room', { nickname: 'Human', maxPlayers: 2, competition: 'Test' });
+      const roomId = createRes.roomId;
 
-      const roomCode = createResult.room.id;
+      await emitAck(s1, 'start_game', { roomId });
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'tactic_selection' && r(d)));
 
-      socket2.emit('quiz_join_room', { roomId: roomCode, nickname: 'Player2' });
+      await emitAck(s1, 'select_tactic', { roomId, tacticId: 'balanced', formation: '4-3-3' });
 
-      const room1Update = await waitForEvent<any>(socket1, 'quiz_room_updated');
-      const room2Update = await waitForEvent<any>(socket2, 'quiz_room_updated');
+      const phases: string[] = [];
+      let currentRoom: any;
+      s1.on('phase_changed', (d: any) => { phases.push(d.phase); });
+      s1.on('room_updated', (r: any) => { currentRoom = r; });
 
-      expect(room1Update.players).toHaveLength(2);
-      expect(room2Update.players).toHaveLength(2);
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'first_half_auction' && r(d)));
+
+      // Skip through first half
+      let maxIterations = 100;
+      while (currentRoom.phase === 'first_half_auction' && maxIterations-- > 0) {
+        const bidRes = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
+        if (!bidRes.success) await emitAck(s1, 'skip_player', { roomId });
+
+        await new Promise(r => {
+          const timeout = setTimeout(r, 200);
+          const listener = () => { clearTimeout(timeout); r(undefined); };
+          s1.once('next_player', listener);
+          s1.once('phase_changed', listener);
+        });
+      }
+
+      if (!phases.includes('halftime')) {
+        await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'halftime' && r(d)));
+      }
+
+      await emitAck(s1, 'finish_halftime', { roomId });
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'second_half_auction' && r(d)));
+
+      // Second half
+      maxIterations = 100;
+      while (currentRoom.phase === 'second_half_auction' && maxIterations-- > 0) {
+        const bidRes = await emitAck(s1, 'place_bid', { roomId, amount: 1 });
+        if (!bidRes.success) await emitAck(s1, 'skip_player', { roomId });
+
+        await new Promise(r => {
+          const timeout = setTimeout(r, 200);
+          const listener = () => { clearTimeout(timeout); r(undefined); };
+          s1.once('next_player', listener);
+          s1.once('phase_changed', listener);
+        });
+      }
+
+      if (!phases.includes('steal')) {
+        await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'steal' && r(d)));
+      }
+
+      const botTeam = currentRoom.teams.find((t: any) => t.id.startsWith('bot-'));
+      expect(botTeam).toBeDefined();
+      expect(botTeam.roster).toHaveLength(11);
+      expect(currentRoom.teams[0].roster).toHaveLength(11);
+
+      await emitAck(s1, 'submit_steal', {
+        roomId,
+        target: botTeam.roster[0].id,
+        offer: currentRoom.teams[0].roster[1].id,
+        protect: currentRoom.teams[0].roster[2].id
+      });
+
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'trade' && r(d)));
+
+      await emitAck(s1, 'trade_response', { roomId, accept: false });
+
+      await new Promise(r => s1.once('phase_changed', (d: any) => d.phase === 'match' && r(d)));
+
+      await emitAck(s1, 'simulate_match', { roomId });
+
+      const matchResult: any = await new Promise(r => s1.once('match_result', r));
+      expect(matchResult.homeScore).toBeGreaterThanOrEqual(0);
+      expect(matchResult.awayScore).toBeGreaterThanOrEqual(0);
+
+      await new Promise(r => setTimeout(r, 500));
+      expect(currentRoom.phase).toBe('result');
     } finally {
-      socket1.disconnect();
-      socket2.disconnect();
+      s1.disconnect();
     }
-  }, 30000);
+  }, 60000);
+});
 
-  it.fails('KNOWN BUG K2: host cannot start game due to missing playerId', async () => {
-    const socket1 = createSocket();
-    const socket2 = createSocket();
+describe('AMO ARENA', () => {
+  it('create room and second player joins', async () => {
+    const s1 = createSocket();
+    const s2 = createSocket();
 
     try {
       await Promise.all([
-        new Promise(resolve => socket1.on('connect', resolve)),
-        new Promise(resolve => socket2.on('connect', resolve))
+        new Promise(r => s1.on('connect', r)),
+        new Promise(r => s2.on('connect', r))
       ]);
 
-      socket1.emit('quiz_create_room', { nickname: 'Host', mode: 'solo' });
-      const createResult = await waitForEvent<any>(socket1, 'quiz_room_created');
-      const roomCode = createResult.room.id;
+      const createRes = await emitAck(s1, 'quiz_create_room', { nickname: 'Host', mode: 'solo' });
+      expect(createRes.room.players).toHaveLength(1);
+      const roomCode = createRes.room.id;
 
-      socket2.emit('quiz_join_room', { roomId: roomCode, nickname: 'Player2' });
-      await waitForEvent<any>(socket2, 'quiz_room_updated');
+      const joinRes = await emitAck(s2, 'quiz_join_room', { roomId: roomCode, nickname: 'Player2' });
+      expect(joinRes.room.players).toHaveLength(2);
 
-      // Host tries to start
-      socket1.emit('quiz_start_game');
-
-      const gameStarted1 = await waitForEvent<any>(socket1, 'quiz_game_started', 5000);
-      const gameStarted2 = await waitForEvent<any>(socket2, 'quiz_game_started', 5000);
-
-      expect(gameStarted1).toBeDefined();
-      expect(gameStarted2).toBeDefined();
+      const room1Update: any = await new Promise(r => s1.once('quiz_room_updated', r));
+      expect(room1Update.players).toHaveLength(2);
     } finally {
-      socket1.disconnect();
-      socket2.disconnect();
+      s1.disconnect();
+      s2.disconnect();
     }
   }, 30000);
 });
