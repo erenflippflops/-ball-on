@@ -1,6 +1,9 @@
-node_modules/ 
-dist/ 
-.env 
-*.log 
-.DS_Store 
+node_modules/
+dist/
+.env
+*.log
+.DS_Store
 .vercel
+test-results/
+playwright-report/
+tests/artifacts/
