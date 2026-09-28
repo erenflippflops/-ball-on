@@ -1,5 +1,10 @@
 # Ball-On Project - Session Notes
 
+## Entry points (updated)
+- **index.html** → `src/ballon-main.tsx` (landing page + BALL-ON draft manager)
+- **amo-arena.html** → `src/amo-arena-main.tsx` (AMO ARENA quiz game)
+- **admin.html** → `src/admin.tsx` (admin panel)
+
 ## Completed Work (2026-09-25)
 
 ### Amo Arena Integration & Bug Fixes
