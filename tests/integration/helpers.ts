@@ -32,8 +32,11 @@ export async function isHealthy(url: string, timeoutMs = 1000): Promise<boolean>
   }
 }
 
-/** Start server/index.ts on its own port and wait until /health answers. */
-export async function startServer(port: number): Promise<TestServer> {
+/**
+ * Start server/index.ts on its own port and wait until /health answers.
+ * extraEnv lets a test pass settings such as GAME_TIME_SCALE (see amo-full-game.test.ts).
+ */
+export async function startServer(port: number, extraEnv: Record<string, string> = {}): Promise<TestServer> {
   const url = `http://127.0.0.1:${port}`;
   if (await isHealthy(url, 500)) {
     throw new Error(`Port ${port} is already in use by another server. Stop it and rerun.`);
@@ -41,7 +44,7 @@ export async function startServer(port: number): Promise<TestServer> {
   let output = '';
   const proc = spawn(process.execPath, [path.join(ROOT, 'node_modules', 'tsx', 'dist', 'cli.mjs'), 'server/index.ts'], {
     cwd: ROOT,
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, ...extraEnv, PORT: String(port) },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   proc.stdout?.on('data', (d) => (output += d.toString()));

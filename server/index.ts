@@ -32,6 +32,7 @@ const rooms = new Map<string, Room>();
 const auctionTimers = new Map<string, NodeJS.Timeout>();
 const halftimeTimers = new Map<string, NodeJS.Timeout>();
 const auctionPhaseTimers = new Map<string, NodeJS.Timeout>(); // 6-minute auction phase timers
+const quizRoundTimers = new Map<string, NodeJS.Timeout>(); // Quiz round timeout timers
 
 // Auction timer function
 function startAuctionTimer(roomId: string, io: Server) {
@@ -1505,6 +1506,32 @@ function processStealPhase(room: Room) {
 // AMO ARENA (QUIZ GAME) EVENT HANDLERS
 // ============================================
 
+function startQuizRoundTimer(roomId: string) {
+  const existing = quizRoundTimers.get(roomId);
+  if (existing) clearTimeout(existing);
+
+  const room = quizGame.getRoom(roomId);
+  if (!room || !room.roundDeadline) return;
+
+  const delay = room.roundDeadline - Date.now();
+  if (delay <= 0) return;
+
+  const timer = setTimeout(() => {
+    try {
+      const room = quizGame.getRoom(roomId);
+      if (!room || room.status !== 'playing') return;
+
+      const result = quizGame.endRound(room, room.hostId);
+      io.to(roomId).emit('quiz_round_result', result);
+      quizRoundTimers.delete(roomId);
+    } catch (err) {
+      console.error(`Error in quiz round timer for room ${roomId}:`, err);
+    }
+  }, delay);
+
+  quizRoundTimers.set(roomId, timer);
+}
+
 io.on('connection', (socket) => {
   // Ball-On events are already handled above...
 
@@ -1512,6 +1539,7 @@ io.on('connection', (socket) => {
   socket.on('quiz_create_room', (data, callback) => {
     try {
       const { room, playerId } = quizGame.createRoom(data.nickname, data.mode);
+      socket.data.quizPlayerId = playerId;
       socket.join(room.id);
       callback({ success: true, room: quizGame.publicRoom(room), playerId });
       io.to(room.id).emit('quiz_room_updated', quizGame.publicRoom(room));
@@ -1523,6 +1551,7 @@ io.on('connection', (socket) => {
   socket.on('quiz_join_room', (data, callback) => {
     try {
       const { room, playerId } = quizGame.joinRoom(data.roomId, data.nickname);
+      socket.data.quizPlayerId = playerId;
       socket.join(room.id);
       callback({ success: true, room: quizGame.publicRoom(room), playerId });
       io.to(room.id).emit('quiz_room_updated', quizGame.publicRoom(room));
@@ -1535,9 +1564,10 @@ io.on('connection', (socket) => {
     try {
       const room = quizGame.getRoom(data.roomId);
       if (!room) throw new Error('Oda bulunamadı');
-      const result = quizGame.startGame(room, data.playerId || socket.id);
+      const result = quizGame.startGame(room, socket.data.quizPlayerId);
       callback({ success: true });
       io.to(room.id).emit('quiz_game_started', result);
+      startQuizRoundTimer(room.id);
     } catch (error: any) {
       callback({ success: false, error: error.message });
     }
@@ -1547,12 +1577,17 @@ io.on('connection', (socket) => {
     try {
       const room = quizGame.getRoom(data.roomId);
       if (!room) throw new Error('Oda bulunamadı');
-      await quizGame.submitAnswer(room, data.playerId || socket.id, data.answer);
+      await quizGame.submitAnswer(room, socket.data.quizPlayerId, data.answer);
       callback({ success: true });
-      io.to(room.id).emit('quiz_player_answered', { playerId: data.playerId || socket.id });
+      io.to(room.id).emit('quiz_player_answered', { playerId: socket.data.quizPlayerId });
 
       // Check if all players answered - auto end round
       if (room.answered.length === room.players.length) {
+        const timer = quizRoundTimers.get(room.id);
+        if (timer) {
+          clearTimeout(timer);
+          quizRoundTimers.delete(room.id);
+        }
         const result = quizGame.endRound(room, room.hostId);
         io.to(room.id).emit('quiz_round_result', result);
       }
@@ -1566,7 +1601,7 @@ io.on('connection', (socket) => {
       const room = quizGame.getRoom(data.roomId);
       if (!room) throw new Error('Oda bulunamadı');
 
-      const result = quizGame.nextRound(room, data.playerId || socket.id);
+      const result = quizGame.nextRound(room, socket.data.quizPlayerId);
 
       if (result.finished) {
         callback({ success: true, finished: true });
@@ -1574,6 +1609,7 @@ io.on('connection', (socket) => {
       } else {
         callback({ success: true });
         io.to(room.id).emit('quiz_game_started', result);
+        startQuizRoundTimer(room.id);
       }
     } catch (error: any) {
       callback({ success: false, error: error.message });

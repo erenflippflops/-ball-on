@@ -51,7 +51,8 @@ export function startGame(room: QuizRoom, playerId: string) { if (room.hostId!==
 export function startRound(room: QuizRoom) {
   const questionId=room.questionOrder?.[room.currentRound-1];
   const q=(questionId ? questions.find(question=>question.id===questionId) : undefined) ?? questions[(room.currentRound-1)%questions.length];
-  const now=Date.now(); room.question=q; room.roundStartedAt=now; room.roundDeadline=now+q.time_limit*1000; room.answered=[]; room.roundScores={}; return { currentRound:room.currentRound, question:publicQuestion(q), totalRounds:room.totalRounds, serverNow:now, deadline:room.roundDeadline };
+  const scale = Number(process.env.GAME_TIME_SCALE ?? 1);
+  const now=Date.now(); room.question=q; room.roundStartedAt=now; room.roundDeadline=now+q.time_limit*1000*scale; room.answered=[]; room.roundScores={}; return { currentRound:room.currentRound, question:publicQuestion(q), totalRounds:room.totalRounds, serverNow:now, deadline:room.roundDeadline };
 }
 function scoreAnswer(question: Question, answer: unknown) {
   if (!answer) return { points:0, correct:false };
