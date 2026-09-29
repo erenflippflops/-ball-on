@@ -924,6 +924,9 @@ function App() {
             chosenFormation={chosenFormation}
             myLineup={myLineup}
             isBidding={isBidding}
+            roomId={roomId}
+            maxPlayers={maxPlayers}
+            begin={begin}
             setMyLineup={setMyLineup}
           />
         )}
@@ -979,236 +982,202 @@ function TacticSelection(p: {
 }) {
   const selectedTacticData = TACTICS.find(t => t.id === p.selectedTactic);
   const recommendedFormations = selectedTacticData?.formations || ['4-3-3', '4-4-2', '3-5-2'];
+  const t = translations.tr;
+
+  // Calculate formation breakdown
+  const getFormationBreakdown = (formation: string) => {
+    const parts = formation.split('-').map(Number);
+    return {
+      GK: 1,
+      DEF: parts[0] || 4,
+      MID: parts[1] || 3,
+      ATT: parts[2] || 3
+    };
+  };
+
+  const breakdown = getFormationBreakdown(p.selectedFormation);
 
   return (
-    <div className="panel" style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <p className="kicker">BALL ON! · STRATEJİ</p>
-      <h1>Taktik ve Diziliş Seç</h1>
-      <p style={{ marginBottom: '30px' }}>
-        Oyun başlamadan önce taktiğini ve dizilişini seç. Bu seçim tüm oyun boyunca <strong>sabit kalacak</strong>.
-        Taktiğine uygun oyuncular açık artırmada ⭐ yıldızlı görünecek.
-      </p>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Pitch decorations */}
+      <div className="pitch-decoration pitch-midline"></div>
+      <div className="pitch-decoration pitch-circle"></div>
+      <div className="pitch-decoration pitch-center-dot"></div>
 
-      <div style={{ marginBottom: '40px' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', color: '#84cc16' }}>Taktiğini Seç:</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px' }}>
-          {TACTICS.map(tactic => (
-            <button
-              key={tactic.id}
-              onClick={() => p.setSelectedTactic(tactic.id)}
-              style={{
-                padding: '20px',
-                background: p.selectedTactic === tactic.id ? 'rgba(132, 204, 22, 0.2)' : 'rgba(15, 23, 42, 0.8)',
-                border: p.selectedTactic === tactic.id ? '2px solid #84cc16' : '1px solid rgba(132, 204, 22, 0.3)',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.2s'
-              }}
-            >
-              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{tactic.icon}</div>
-              <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '5px', color: '#F1F5F9' }}>
-                {tactic.name}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.4' }}>
-                {tactic.description}
-              </div>
-              {p.selectedTactic === tactic.id && (
-                <div style={{ marginTop: '10px', fontSize: '0.75rem', color: '#84cc16' }}>
-                  ✓ Seçildi
-                </div>
-              )}
-            </button>
-          ))}
+      <header className="app-header">
+        <div className="app-logo">
+          <span className="app-logo-text">BALL-ON</span>
+          <span className="app-subtitle">{t.tacticSelection}</span>
         </div>
-      </div>
+      </header>
 
-      {p.selectedTactic && (
-        <div style={{ marginBottom: '40px' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', color: '#84cc16' }}>
-            Diziliş Seç {selectedTacticData && `(${selectedTacticData.name} için önerilen)`}:
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-            {['4-3-3', '4-4-2', '3-5-2', '4-2-3-1', '3-4-3'].map(formation => {
-              const isRecommended = recommendedFormations.includes(formation);
-              return (
-                <button
-                  key={formation}
-                  onClick={() => p.setSelectedFormation(formation)}
-                  style={{
-                    padding: '15px 10px',
-                    background: p.selectedFormation === formation ? '#84cc16' : isRecommended ? 'rgba(132, 204, 22, 0.15)' : 'rgba(15, 23, 42, 0.8)',
-                    border: p.selectedFormation === formation ? '2px solid #84cc16' : isRecommended ? '1px solid rgba(132, 204, 22, 0.5)' : '1px solid rgba(132, 204, 22, 0.3)',
-                    borderRadius: '8px',
-                    color: p.selectedFormation === formation ? '#0F172A' : '#F1F5F9',
-                    cursor: 'pointer',
-                    fontWeight: p.selectedFormation === formation ? 700 : 500,
-                    fontSize: '0.9rem',
-                    position: 'relative'
-                  }}
-                >
-                  {formation}
-                  {isRecommended && p.selectedFormation !== formation && (
-                    <div style={{ fontSize: '0.65rem', color: '#84cc16', marginTop: '3px' }}>
-                      ⭐ Önerilen
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <button
-        className="primary"
-        onClick={() => p.onSelect(p.selectedTactic, p.selectedFormation)}
-        disabled={!p.selectedTactic}
-        style={{
-          opacity: !p.selectedTactic ? 0.5 : 1,
-          cursor: !p.selectedTactic ? 'not-allowed' : 'pointer'
-        }}
-      >
-        Taktiği onayla ve açık artırmaya başla →
-      </button>
-
-      {p.selectedTactic && selectedTacticData && (
-        <div style={{
-          marginTop: '30px',
-          padding: '20px',
-          background: 'rgba(132, 204, 22, 0.1)',
-          border: '1px solid rgba(132, 204, 22, 0.3)',
-          borderRadius: '8px'
-        }}>
-          <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '10px' }}>
-            <strong style={{ color: '#84cc16' }}>{selectedTacticData.name}</strong> taktiğine uygun arketipler:
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            {selectedTacticData.preferredArchetypes.slice(0, 8).map(archetype => (
-              <span
-                key={archetype}
-                style={{
-                  padding: '4px 10px',
-                  background: 'rgba(132, 204, 22, 0.15)',
-                  border: '1px solid rgba(132, 204, 22, 0.3)',
-                  borderRadius: '4px',
-                  fontSize: '0.75rem',
-                  color: '#84cc16'
-                }}
+      <section style={{ position: 'relative', padding: '18px 22px 0', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span className="label">{t.tacticLabel}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {TACTICS.map(tactic => (
+              <button
+                key={tactic.id}
+                data-testid={`tactic-${tactic.id}`}
+                className={`tactic-tile ${p.selectedTactic === tactic.id ? 'selected' : ''}`}
+                onClick={() => p.setSelectedTactic(tactic.id)}
               >
-                {archetype}
-              </span>
+                <span className="tactic-tile-title">{tactic.name}</span>
+                <span className="tactic-tile-desc">{tactic.description}</span>
+              </button>
             ))}
-            {selectedTacticData.preferredArchetypes.length > 8 && (
-              <span style={{ fontSize: '0.75rem', color: '#94a3b8', padding: '4px 10px' }}>
-                +{selectedTacticData.preferredArchetypes.length - 8} daha...
-              </span>
-            )}
           </div>
         </div>
-      )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <span className="label">{t.formationLabel}</span>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {recommendedFormations.map(formation => (
+              <button
+                key={formation}
+                data-testid={`formation-${formation}`}
+                className={`option-btn ${p.selectedFormation === formation ? 'selected' : ''}`}
+                onClick={() => p.setSelectedFormation(formation)}
+                style={{ flex: 1, fontSize: '18px' }}
+              >
+                {formation}
+              </button>
+            ))}
+          </div>
+          <div className="formation-breakdown">
+            <span>GK {breakdown.GK}</span>
+            <span>DEF {breakdown.DEF}</span>
+            <span>MID {breakdown.MID}</span>
+            <span>ATT {breakdown.ATT}</span>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ position: 'relative', marginTop: 'auto', padding: '12px 16px 22px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <button
+          data-testid="confirm-tactic"
+          className="btn-primary"
+          onClick={() => p.onSelect(p.selectedTactic, p.selectedFormation)}
+          disabled={!p.selectedTactic || !p.selectedFormation}
+        >
+          {t.confirmTactic}
+        </button>
+        <span style={{ textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--muted)' }}>
+          {t.tacticWarning}
+        </span>
+      </section>
     </div>
   );
 }
 
 function Lobby(p: any) {
-  return (
-    <section className="lobby">
-      <div className="hero">
-        <p className="kicker">GERÇEK ZAMANLI KADRO KURMA</p>
-        <h1>
-          Takımını kur.
-          <br />
-          <em>Oyunu değiştir.</em>
-        </h1>
-        <p className="intro">Gizli oyuncu havuzundan teklif ver, rakipten oyuncu çal, doğru kimyayla turnuvayı kazan.</p>
+  const t = translations[p.language as Language];
 
-        {/* Game Explanation */}
-        <div style={{
-          marginTop: '30px',
-          padding: '20px',
-          background: 'rgba(15, 23, 42, 0.6)',
-          borderRadius: '12px',
-          border: '1px solid rgba(132, 204, 22, 0.2)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <h3 style={{ margin: '0 0 15px', fontSize: '1.1rem', color: '#84cc16', fontFamily: 'var(--font-heading)' }}>
-            🎯 NASIL OYNANIR?
-          </h3>
-          <div style={{ fontSize: '0.9rem', lineHeight: '1.8', color: '#E2E8F0' }}>
-            <p style={{ margin: '0 0 10px' }}>
-              <strong style={{ color: '#84cc16' }}>1. Açık Artırma:</strong> 14 oyuncuyu sırayla sat satın al. Piyasa değerine dikkat et, bütçeni iyi kullan!
-            </p>
-            <p style={{ margin: '0 0 10px' }}>
-              <strong style={{ color: '#84cc16' }}>2. Oyuncu Çalma:</strong> Rakipten bir oyuncu çal, biri seni korusun. İstediğin oyuncuyu seç!
-            </p>
-            <p style={{ margin: '0 0 10px' }}>
-              <strong style={{ color: '#84cc16' }}>3. Takas:</strong> Rakiple oyuncu takası teklif et veya kabul et.
-            </p>
-            <p style={{ margin: '0' }}>
-              <strong style={{ color: '#84cc16' }}>4. Maç:</strong> İlk 11'ini seç, taktiğini belirle ve rakibinle kapış!
-            </p>
-          </div>
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Pitch decorations */}
+      <div className="pitch-decoration pitch-midline"></div>
+      <div className="pitch-decoration pitch-circle"></div>
+      <div className="pitch-decoration pitch-center-dot"></div>
+
+      <header className="app-header">
+        <div className="app-logo">
+          <span className="app-logo-text">BALL-ON</span>
+          <span className="app-subtitle">DRAFT MANAGER</span>
         </div>
-      </div>
-      <div className="card lobby-card">
-        <h2>Oyuna katıl</h2>
-        <label>
-          Takma ad
-          <input value={p.nick} onChange={e => p.setNick(e.target.value)} placeholder="Örn. Kartal11" />
-        </label>
-        <label>
-          Turnuva / Lig
-          <select value={p.competition} onChange={e => p.setCompetition(e.target.value)}>
-            <optgroup label="Ligler">
-              <option value="Premier League">🏴 Premier League</option>
-              <option value="La Liga">🇪🇸 La Liga</option>
-              <option value="Serie A">🇮🇹 Serie A</option>
-              <option value="Bundesliga">🇩🇪 Bundesliga</option>
-              <option value="Ligue 1">🇫🇷 Ligue 1</option>
-            </optgroup>
-            <optgroup label="Turnuvalar">
-              <option value="Champions League">🏆 Champions League</option>
-              <option value="Europa League">🥈 Europa League</option>
-              <option value="FA Cup">🏴 FA Cup</option>
-              <option value="Copa del Rey">🇪🇸 Copa del Rey</option>
-              <option value="Coppa Italia">🇮🇹 Coppa Italia</option>
-            </optgroup>
-          </select>
-        </label>
-        <label>
-          Maksimum oyuncu sayısı
-          <select value={p.maxPlayers} onChange={e => p.setMaxPlayers(Number(e.target.value))}>
-            <option value={2}>2 Kişi (1v1)</option>
-            <option value={4}>4 Kişi</option>
-            <option value={6}>6 Kişi</option>
-            <option value={8}>8 Kişi</option>
-          </select>
-        </label>
-        <button className="primary" onClick={p.start}>
-          + Yeni oda oluştur
+      </header>
+
+      <section style={{ position: 'relative', padding: '18px 22px 26px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span className="label">{t.nickname}</span>
+            <input
+              data-testid="nickname-input"
+              className="input-field"
+              value={p.nick}
+              onChange={e => p.setNick(e.target.value)}
+              placeholder={t.nicknamePlaceholder}
+            />
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span className="label">{t.tournament}</span>
+            <select
+              data-testid="league-select"
+              className="select-field"
+              value={p.competition}
+              onChange={e => p.setCompetition(e.target.value)}
+            >
+              <optgroup label="Ligler">
+                <option value="Premier League">🏴 Premier League</option>
+                <option value="La Liga">🇪🇸 La Liga</option>
+                <option value="Serie A">🇮🇹 Serie A</option>
+                <option value="Bundesliga">🇩🇪 Bundesliga</option>
+                <option value="Ligue 1">🇫🇷 Ligue 1</option>
+              </optgroup>
+              <optgroup label="Turnuvalar">
+                <option value="Champions League">🏆 Champions League</option>
+                <option value="Europa League">🥈 Europa League</option>
+                <option value="FA Cup">🏴 FA Cup</option>
+                <option value="Copa del Rey">🇪🇸 Copa del Rey</option>
+                <option value="Coppa Italia">🇮🇹 Coppa Italia</option>
+              </optgroup>
+            </select>
+          </label>
+
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span className="label">{t.roomSizeLabel}</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[2, 4, 6, 8].map(size => (
+                <button
+                  key={size}
+                  data-testid={`room-size`}
+                  className={`option-btn ${p.maxPlayers === size ? 'selected' : ''}`}
+                  onClick={() => p.setMaxPlayers(size)}
+                  style={{ flex: 1 }}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </label>
+        </div>
+
+        <button
+          data-testid="create-room"
+          className="btn-primary"
+          onClick={p.start}
+          disabled={!p.nick.trim()}
+        >
+          {t.createRoom}
         </button>
-        <div className="or">veya</div>
-        <div className="join">
-          <input
-            value={p.room}
-            onChange={e => p.setRoom(e.target.value.toUpperCase())}
-            placeholder="ODA KODU"
-          />
-          <button onClick={p.join}>Katıl</button>
+
+        <span className="label" style={{ textAlign: 'center', margin: '4px 0' }}>{t.or}</span>
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <label style={{ flexGrow: 1, display: 'flex' }}>
+            <span className="sr-only">{t.roomCode}</span>
+            <input
+              data-testid="join-code-input"
+              className="input-field"
+              value={p.room}
+              onChange={e => p.setRoom(e.target.value.toUpperCase())}
+              placeholder={t.roomCode}
+              style={{ letterSpacing: '0.14em', textTransform: 'uppercase' }}
+            />
+          </label>
+          <button
+            data-testid="join-room"
+            className="btn-secondary btn-navy"
+            onClick={p.join}
+            disabled={!p.nick.trim() || !p.room.trim()}
+            style={{ width: '96px' }}
+          >
+            {t.joinButton}
+          </button>
         </div>
-        {p.room && (
-          <div className="lobby-ready">
-            <span className="dot" /> {p.room} odası · {p.playerCount || 1}/{p.maxPlayers} Oyuncu
-            {p.playerCount >= p.maxPlayers && <span style={{ color: '#b8ed61', marginLeft: '10px' }}>✓ Hazır</span>}
-            <button className="primary" onClick={p.begin}>
-              Oyunu başlat →
-            </button>
-          </div>
-        )}
-        <p className="hint">Server authoritative · Seed tabanlı simülasyon · Türkçe</p>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
@@ -1307,8 +1276,80 @@ function Game(p: any) {
           Oyuncuları sürükleyip bırakarak düzenleyebilirsiniz
         </div>
       </aside>
-      <div className="board">
+      <div className="board" data-testid="game-root" data-phase={p.phase}>
         <div className="notice">{p.message}</div>
+
+        {/* Waiting room - before game starts */}
+        {p.phase === 'lobby' && p.roomId && p.teams && p.teams.length > 0 && (
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Pitch decorations */}
+            <div className="pitch-decoration pitch-midline"></div>
+            <div className="pitch-decoration pitch-circle"></div>
+            <div className="pitch-decoration pitch-center-dot"></div>
+
+            <header className="app-header">
+              <div className="app-logo">
+                <span className="app-logo-text">BALL-ON</span>
+                <span className="app-subtitle">DRAFT MANAGER</span>
+              </div>
+            </header>
+
+            <section style={{ position: 'relative', padding: '18px 22px 26px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div className="room-code-display" data-testid="room-code">
+                <span className="label">{translations.tr.roomCode}</span>
+                <span className="room-code-text">{p.roomId?.toUpperCase() || 'XXXX'}</span>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--muted)' }}>
+                  {translations.tr.roomReady}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span className="label">{translations.tr.players}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {p.teams.map((team: Team, idx: number) => (
+                    <div key={team.id} className="player-item">
+                      <div className={`avatar ${idx === 0 ? 'avatar-red' : idx === 1 ? 'avatar-navy' : 'avatar-orange'}`}>
+                        {team.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="player-item-info">
+                        <span className="player-item-name">{team.name}</span>
+                        <span className="player-item-status">
+                          {idx === 0 ? translations.tr.roomCreator : translations.tr.ready}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {Array.from({ length: Math.max(0, (p.maxPlayers || 2) - p.teams.length) }).map((_, idx) => (
+                    <div key={`empty-${idx}`} className="player-item player-item-empty">
+                      <div className="avatar" style={{ border: '2px dashed var(--muted)', background: 'transparent' }}>
+                        <span style={{ color: 'var(--muted)' }}>?</span>
+                      </div>
+                      <div className="player-item-info">
+                        <span className="player-item-name">{translations.tr.emptySlot}</span>
+                        <span className="player-item-status">{translations.tr.botWillJoin}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section style={{ position: 'relative', marginTop: 'auto', padding: '12px 16px 22px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                data-testid="start-game"
+                className="btn-primary"
+                onClick={p.begin}
+                disabled={p.teams.length < 1}
+              >
+                {translations.tr.startGame}
+              </button>
+              <span style={{ textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--muted)' }}>
+                {translations.tr.onlyHostCanStart}
+              </span>
+            </section>
+          </div>
+        )}
+
         {(p.phase === 'first_half_auction' || p.phase === 'second_half_auction') && <Auction {...p} />}
         {p.phase === 'steal' && <Steal {...p} />}
         {p.phase === 'trade' && <Trade {...p} />}
