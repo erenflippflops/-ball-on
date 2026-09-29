@@ -1,5 +1,10 @@
 import type { Player, Team } from '../src/types';
 
+// Rule 3: Fast bot decisions with randomized delay
+export function randomBotDelay(): number {
+  return 1000 + Math.random() * 2000; // 1-3 seconds
+}
+
 export class BotAI {
   private team: Team;
   private budget: number;

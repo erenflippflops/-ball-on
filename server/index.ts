@@ -6,7 +6,7 @@ import 'dotenv/config';
 import type { Room, Team, Player, Phase, MatchResult } from '../src/types';
 import { getShuffledPool } from '../src/playerPool';
 import { simulateMatch as runMatchSimulation } from './matchSimulator';
-import { BotAI } from './botAI';
+import { BotAI, randomBotDelay } from './botAI';
 import { canAddPlayer, getPositionStats } from './positionLimits';
 import * as quizGame from './quizGame.js';
 
@@ -34,6 +34,26 @@ const halftimeTimers = new Map<string, NodeJS.Timeout>();
 const auctionPhaseTimers = new Map<string, NodeJS.Timeout>(); // 6-minute auction phase timers
 const quizRoundTimers = new Map<string, NodeJS.Timeout>(); // Quiz round timeout timers
 
+const GAME_TIME_SCALE = Number(process.env.GAME_TIME_SCALE ?? 1);
+
+// Rule 4: Bid duration scales by room size
+function getBidDuration(maxPlayers: number): number {
+  const baseDuration = maxPlayers <= 2 ? 14 : maxPlayers <= 4 ? 20 : 30;
+  return baseDuration * GAME_TIME_SCALE;
+}
+
+// Rule 5: Halftime duration scales by room size
+function getHalftimeDuration(maxPlayers: number): number {
+  const baseDuration = maxPlayers <= 2 ? 60 : maxPlayers <= 4 ? 90 : 120;
+  return baseDuration * GAME_TIME_SCALE;
+}
+
+// Rule 6: Auction phase duration (half) scales by room size
+function getAuctionPhaseDuration(maxPlayers: number): number {
+  const baseDuration = maxPlayers <= 2 ? 180 : maxPlayers <= 4 ? 300 : 360;
+  return baseDuration * GAME_TIME_SCALE;
+}
+
 // Auction timer function
 function startAuctionTimer(roomId: string, io: Server) {
   // Clear existing timer if any
@@ -45,6 +65,8 @@ function startAuctionTimer(roomId: string, io: Server) {
   const room = rooms.get(roomId);
   if (!room || !room.auctionState) return;
 
+  const bidDuration = getBidDuration(room.maxPlayers);
+
   // Emit timer updates every second
   const timer = setInterval(() => {
     const room = rooms.get(roomId);
@@ -55,7 +77,7 @@ function startAuctionTimer(roomId: string, io: Server) {
     }
 
     const elapsed = Math.floor((Date.now() - room.auctionState.timerStarted) / 1000);
-    room.auctionState.timeLeft = Math.max(0, 14 - elapsed);
+    room.auctionState.timeLeft = Math.max(0, bidDuration - elapsed);
 
     // Emit timer update
     io.to(roomId).emit('auction_timer', { timeLeft: room.auctionState.timeLeft });
@@ -66,7 +88,7 @@ function startAuctionTimer(roomId: string, io: Server) {
       auctionTimers.delete(roomId);
       finalizeAuction(roomId, io);
     }
-  }, 1000);
+  }, 1000 * GAME_TIME_SCALE);
 
   auctionTimers.set(roomId, timer);
 }
@@ -107,7 +129,7 @@ function startHalftimeTimer(roomId: string, io: Server) {
       io.to(roomId).emit('phase_changed', { phase: 'second_half_auction' });
       io.to(roomId).emit('room_updated', room);
 
-      // Start auction phase timer for second half (6 minutes)
+      // Start auction phase timer for second half
       startAuctionPhaseTimer(roomId, io);
 
       // Start next auction
@@ -117,7 +139,7 @@ function startHalftimeTimer(roomId: string, io: Server) {
           currentBids: {},
           highestBidder: null,
           highestBid: 0,
-          timeLeft: 14,
+          timeLeft: getBidDuration(room.maxPlayers),
           timerStarted: Date.now(),
           skippedPlayers: []
         };
@@ -126,12 +148,12 @@ function startHalftimeTimer(roomId: string, io: Server) {
         io.to(roomId).emit('room_updated', room);
       }
     }
-  }, 1000);
+  }, 1000 * GAME_TIME_SCALE);
 
   halftimeTimers.set(roomId, timer);
 }
 
-// Auction phase timer function (6 minutes for each half)
+// Auction phase timer function (scales by room size)
 function startAuctionPhaseTimer(roomId: string, io: Server) {
   // Clear existing timer if any
   const existingTimer = auctionPhaseTimers.get(roomId);
@@ -142,7 +164,7 @@ function startAuctionPhaseTimer(roomId: string, io: Server) {
   const room = rooms.get(roomId);
   if (!room || (room.phase !== 'first_half_auction' && room.phase !== 'second_half_auction')) return;
 
-  let timeLeft = 360; // 6 minutes = 360 seconds
+  let timeLeft = getAuctionPhaseDuration(room.maxPlayers);
 
   const timer = setInterval(() => {
     const room = rooms.get(roomId);
@@ -154,7 +176,7 @@ function startAuctionPhaseTimer(roomId: string, io: Server) {
 
     timeLeft--;
 
-    // When time reaches 0, move to next phase
+    // When time reaches 0, free-fill and move to next phase
     if (timeLeft <= 0) {
       clearInterval(timer);
       auctionPhaseTimers.delete(roomId);
@@ -166,10 +188,13 @@ function startAuctionPhaseTimer(roomId: string, io: Server) {
         auctionTimers.delete(roomId);
       }
 
+      // Rule 7: Free-fill all incomplete teams when half expires
+      freeFillAllTeams(room);
+
       if (room.phase === 'first_half_auction') {
         // Move to halftime
         room.phase = 'halftime';
-        room.halftimeTimer = 90;
+        room.halftimeTimer = getHalftimeDuration(room.maxPlayers);
         room.marketplace = [];
         room.halftimeOffers = [];
         startHalftimeTimer(roomId, io);
@@ -182,9 +207,24 @@ function startAuctionPhaseTimer(roomId: string, io: Server) {
         io.to(roomId).emit('room_updated', room);
       }
     }
-  }, 1000);
+  }, 1000 * GAME_TIME_SCALE);
 
   auctionPhaseTimers.set(roomId, timer);
+}
+
+// Rule 7: Free-fill helper - fills all teams to 11 players with random players from pool
+function freeFillAllTeams(room: Room) {
+  for (const team of room.teams) {
+    while (team.roster.length < 11 && room.auctionPool.length > room.currentPlayerIndex) {
+      const player = room.auctionPool[room.currentPlayerIndex];
+      if (player && !team.roster.some(p => p.id === player.id)) {
+        team.roster.push(player);
+        room.currentPlayerIndex++;
+      } else {
+        room.currentPlayerIndex++;
+      }
+    }
+  }
 }
 
 // Finalize auction - award player to highest bidder
@@ -298,6 +338,28 @@ function finalizeAuction(roomId: string, io: Server) {
   // Move to next player
   room.currentPlayerIndex++;
 
+  // Rule 7: Check if pool is exhausted - free-fill all teams
+  if (room.currentPlayerIndex >= room.auctionPool.length) {
+    freeFillAllTeams(room);
+
+    if (room.phase === 'first_half_auction') {
+      // Move to halftime
+      room.phase = 'halftime';
+      room.halftimeTimer = getHalftimeDuration(room.maxPlayers);
+      room.marketplace = [];
+      room.halftimeOffers = [];
+      startHalftimeTimer(roomId, io);
+      io.to(roomId).emit('phase_changed', { phase: 'halftime' });
+      io.to(roomId).emit('room_updated', room);
+    } else if (room.phase === 'second_half_auction') {
+      // Move to steal phase
+      room.phase = 'steal';
+      io.to(roomId).emit('phase_changed', { phase: 'steal' });
+      io.to(roomId).emit('room_updated', room);
+    }
+    return;
+  }
+
   // Check for halftime after ~6 players (first half auction complete - half of 11)
   if (room.phase === 'first_half_auction' && room.currentPlayerIndex >= 6) {
     // Clear auction phase timer
@@ -309,10 +371,10 @@ function finalizeAuction(roomId: string, io: Server) {
 
     // Move to halftime transfer window
     room.phase = 'halftime';
-    room.halftimeTimer = 90; // 90 seconds for transfers
-    room.marketplace = []; // Initialize empty marketplace
+    room.halftimeTimer = getHalftimeDuration(room.maxPlayers);
+    room.marketplace = [];
     room.halftimeOffers = [];
-    startHalftimeTimer(roomId, io); // Start halftime countdown
+    startHalftimeTimer(roomId, io);
     io.to(roomId).emit('phase_changed', { phase: 'halftime' });
     io.to(roomId).emit('room_updated', room);
     return;
@@ -335,12 +397,12 @@ function finalizeAuction(roomId: string, io: Server) {
           currentBids: {},
           highestBidder: null,
           highestBid: 0,
-          timeLeft: 14,
+          timeLeft: getBidDuration(room.maxPlayers),
           timerStarted: Date.now(),
           skippedPlayers: []
         };
 
-        // Bot auto-bid logic
+        // Rule 3: Bot auto-bid logic with randomized delay
         const botTeams = room.teams.filter(t => t.id.startsWith('bot'));
         botTeams.forEach(botTeam => {
         if (botTeam.roster.length < 11) {
@@ -383,7 +445,7 @@ function finalizeAuction(roomId: string, io: Server) {
                   }
                 }
               }
-            }, Math.random() * 5000 + 2000); // Bot bids after 2-7 seconds
+            }, randomBotDelay() * GAME_TIME_SCALE); // Bot bids after 1-3 seconds
           } else {
             // Bot skips this player immediately
             if (!room.auctionState.skippedPlayers.includes(botTeam.id)) {
@@ -483,7 +545,7 @@ function startMatch(roomId: string) {
     } catch (err) {
       console.error(`Error simulating match for room ${roomId}:`, err);
     }
-  }, 3000);
+  }, 3000 * GAME_TIME_SCALE);
 }
 
 // K5 fix: wrap all socket handlers to prevent crashes from missing ack callbacks or thrown errors
@@ -546,12 +608,15 @@ io.on('connection', (socket) => {
 
   // Create room
   socket.on('create_room', ({ nickname, maxPlayers, competition }, callback) => {
+    // Rule 1: Validate maxPlayers (2-8 only, no coercion)
+    const validMaxPlayers = [2, 3, 4, 5, 6, 7, 8];
+    if (!maxPlayers || !Number.isInteger(maxPlayers) || !validMaxPlayers.includes(maxPlayers)) {
+      callback({ success: false, roomId: undefined });
+      return;
+    }
+
     const roomId = generateRoomId();
     const playerTeam = createTeam(socket.id, nickname || 'Oyuncu');
-
-    // Validate maxPlayers
-    const validMaxPlayers = [2, 4, 6, 8];
-    const roomMaxPlayers = validMaxPlayers.includes(maxPlayers) ? maxPlayers : 2;
 
     const room: Room = {
       id: roomId,
@@ -559,7 +624,7 @@ io.on('connection', (socket) => {
       phase: 'lobby',
       currentPlayerIndex: 0,
       auctionPool: getShuffledPool(150),
-      maxPlayers: roomMaxPlayers,
+      maxPlayers: maxPlayers,
       competition: competition || 'Premier League'
     };
 
@@ -718,7 +783,7 @@ io.on('connection', (socket) => {
         });
         io.to(roomId).emit('room_updated', currentRoom);
       }
-    }, 2500); // 2.5 seconds delay for bots
+    }, 2500 * GAME_TIME_SCALE); // 2.5 seconds delay for bots
   });
 
   // Place bid
