@@ -38,19 +38,19 @@ const GAME_TIME_SCALE = Number(process.env.GAME_TIME_SCALE ?? 1);
 
 // Rule 4: Bid duration scales by room size
 function getBidDuration(maxPlayers: number): number {
-  const baseDuration = maxPlayers <= 2 ? 14 : maxPlayers <= 4 ? 20 : 30;
+  const baseDuration = maxPlayers >= 5 ? 8 : 14;
   return baseDuration * GAME_TIME_SCALE;
 }
 
 // Rule 5: Halftime duration scales by room size
 function getHalftimeDuration(maxPlayers: number): number {
-  const baseDuration = maxPlayers <= 2 ? 60 : maxPlayers <= 4 ? 90 : 120;
+  const baseDuration = maxPlayers >= 5 ? 90 : 60;
   return baseDuration * GAME_TIME_SCALE;
 }
 
 // Rule 6: Auction phase duration (half) scales by room size
 function getAuctionPhaseDuration(maxPlayers: number): number {
-  const baseDuration = maxPlayers <= 2 ? 180 : maxPlayers <= 4 ? 300 : 360;
+  const baseDuration = maxPlayers >= 5 ? 240 : 180;
   return baseDuration * GAME_TIME_SCALE;
 }
 
@@ -212,16 +212,40 @@ function startAuctionPhaseTimer(roomId: string, io: Server) {
   auctionPhaseTimers.set(roomId, timer);
 }
 
-// Rule 7: Free-fill helper - fills all teams to 11 players with random players from pool
+// Rule 7: Free-fill helper - fills teams based on phase
+// First half: fill to reach halftime threshold (floor(maxPlayers * 11 / 2))
+// Second half: fill all teams to 11 players
 function freeFillAllTeams(room: Room) {
-  for (const team of room.teams) {
-    while (team.roster.length < 11 && room.auctionPool.length > room.currentPlayerIndex) {
-      const player = room.auctionPool[room.currentPlayerIndex];
-      if (player && !team.roster.some(p => p.id === player.id)) {
-        team.roster.push(player);
+  const halftimeThreshold = Math.floor(room.maxPlayers * 11 / 2);
+  const isFirstHalf = room.phase === 'first_half_auction';
+
+  // Calculate target: halftime threshold for first half, full rosters for second half
+  const targetTotal = isFirstHalf ? halftimeThreshold : room.maxPlayers * 11;
+
+  let currentTotal = room.teams.reduce((sum, t) => sum + t.roster.length, 0);
+
+  // Fill players until we reach the target
+  while (currentTotal < targetTotal && room.currentPlayerIndex < room.auctionPool.length) {
+    // Round-robin: give one player to each incomplete team
+    for (const team of room.teams) {
+      if (currentTotal >= targetTotal) break;
+
+      const teamTarget = isFirstHalf ? Math.ceil(halftimeThreshold / room.maxPlayers) : 11;
+      if (team.roster.length >= teamTarget) continue;
+
+      // Find next valid player for this team
+      while (room.currentPlayerIndex < room.auctionPool.length) {
+        const player = room.auctionPool[room.currentPlayerIndex];
         room.currentPlayerIndex++;
-      } else {
-        room.currentPlayerIndex++;
+
+        if (player && !team.roster.some(p => p.id === player.id)) {
+          const positionCheck = canAddPlayer(team, player);
+          if (positionCheck.allowed) {
+            team.roster.push(player);
+            currentTotal++;
+            break;
+          }
+        }
       }
     }
   }
@@ -338,6 +362,30 @@ function finalizeAuction(roomId: string, io: Server) {
   // Move to next player
   room.currentPlayerIndex++;
 
+  // Rule 3: Check for halftime when total roster across all teams reaches half of total capacity
+  // Total capacity = maxPlayers * 11, halftime at floor(capacity / 2)
+  const totalRosterCount = room.teams.reduce((sum, t) => sum + t.roster.length, 0);
+  const halftimeThreshold = Math.floor(room.maxPlayers * 11 / 2);
+
+  if (room.phase === 'first_half_auction' && totalRosterCount >= halftimeThreshold) {
+    // Clear auction phase timer
+    const phaseTimer = auctionPhaseTimers.get(roomId);
+    if (phaseTimer) {
+      clearInterval(phaseTimer);
+      auctionPhaseTimers.delete(roomId);
+    }
+
+    // Move to halftime transfer window
+    room.phase = 'halftime';
+    room.halftimeTimer = getHalftimeDuration(room.maxPlayers);
+    room.marketplace = [];
+    room.halftimeOffers = [];
+    startHalftimeTimer(roomId, io);
+    io.to(roomId).emit('phase_changed', { phase: 'halftime' });
+    io.to(roomId).emit('room_updated', room);
+    return;
+  }
+
   // Rule 7: Check if pool is exhausted - free-fill all teams
   if (room.currentPlayerIndex >= room.auctionPool.length) {
     freeFillAllTeams(room);
@@ -357,26 +405,6 @@ function finalizeAuction(roomId: string, io: Server) {
       io.to(roomId).emit('phase_changed', { phase: 'steal' });
       io.to(roomId).emit('room_updated', room);
     }
-    return;
-  }
-
-  // Check for halftime after ~6 players (first half auction complete - half of 11)
-  if (room.phase === 'first_half_auction' && room.currentPlayerIndex >= 6) {
-    // Clear auction phase timer
-    const phaseTimer = auctionPhaseTimers.get(roomId);
-    if (phaseTimer) {
-      clearInterval(phaseTimer);
-      auctionPhaseTimers.delete(roomId);
-    }
-
-    // Move to halftime transfer window
-    room.phase = 'halftime';
-    room.halftimeTimer = getHalftimeDuration(room.maxPlayers);
-    room.marketplace = [];
-    room.halftimeOffers = [];
-    startHalftimeTimer(roomId, io);
-    io.to(roomId).emit('phase_changed', { phase: 'halftime' });
-    io.to(roomId).emit('room_updated', room);
     return;
   }
 
@@ -427,6 +455,10 @@ function finalizeAuction(roomId: string, io: Server) {
                     highestBid: botBid,
                     highestBidder: botTeam.name
                   });
+                  io.to(roomId).emit('new_bid', {
+                    team: { id: botTeam.id, name: botTeam.name },
+                    amount: botBid
+                  });
                   io.to(roomId).emit('room_updated', room);
 
                   // Check if all players decided after bot bid
@@ -447,16 +479,28 @@ function finalizeAuction(roomId: string, io: Server) {
               }
             }, randomBotDelay() * GAME_TIME_SCALE); // Bot bids after 1-3 seconds
           } else {
-            // Bot skips this player immediately
-            if (!room.auctionState.skippedPlayers.includes(botTeam.id)) {
-              room.auctionState.skippedPlayers.push(botTeam.id);
-            }
+            // Bot skips this player after delay
+            setTimeout(() => {
+              const room = rooms.get(roomId);
+              if (room && room.auctionState && !room.auctionState.skippedPlayers.includes(botTeam.id)) {
+                room.auctionState.skippedPlayers.push(botTeam.id);
+                io.to(roomId).emit('player_skipped_bid', {
+                  team: { id: botTeam.id, name: botTeam.name }
+                });
+              }
+            }, randomBotDelay() * GAME_TIME_SCALE);
           }
         } else {
-          // Bot roster full, skip
-          if (!room.auctionState.skippedPlayers.includes(botTeam.id)) {
-            room.auctionState.skippedPlayers.push(botTeam.id);
-          }
+          // Bot roster full, skip after delay
+          setTimeout(() => {
+            const room = rooms.get(roomId);
+            if (room && room.auctionState && !room.auctionState.skippedPlayers.includes(botTeam.id)) {
+              room.auctionState.skippedPlayers.push(botTeam.id);
+              io.to(roomId).emit('player_skipped_bid', {
+                team: { id: botTeam.id, name: botTeam.name }
+              });
+            }
+          }, randomBotDelay() * GAME_TIME_SCALE);
         }
       });
 
@@ -611,7 +655,7 @@ io.on('connection', (socket) => {
     // Rule 1: Validate maxPlayers (2-8 only, no coercion)
     const validMaxPlayers = [2, 3, 4, 5, 6, 7, 8];
     if (!maxPlayers || !Number.isInteger(maxPlayers) || !validMaxPlayers.includes(maxPlayers)) {
-      callback({ success: false, roomId: undefined });
+      callback({ success: false, roomId: undefined, error: 'Geçersiz oyuncu sayısı. 2-8 arası bir sayı seçin.' });
       return;
     }
 
